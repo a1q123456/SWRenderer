@@ -2,7 +2,7 @@
 #include "vec.h"
 #include "matrix.h"
 #define _USE_MATH_DEFINES
-#include <math.h>
+#include <cmath>
 
 SWRenderer::SWRenderer(HDC hdc, int w, int h) : hdc(hdc), width(w), height(h)
 {
@@ -163,56 +163,90 @@ int indexList[] = {
     20, 21, 22,
     20, 22, 23};
 
+float fpi()
+{
+    return atan(1.f) * 4;
+}
+
+Mat4x4f perspective(
+    const float &angleOfView,
+    const float &imageAspectRatio,
+    const float &n, const float &f)
+{
+    float r, l, b, t;
+    float scale = tan(angleOfView * 0.5 * fpi() / 180.f) * n;
+    r = imageAspectRatio * scale, l = -r;
+    t = scale, b = -t;
+
+    Mat4x4f M;
+    M.vals[0][0] = 2 * n / (r - l);
+    M.vals[0][1] = 0;
+    M.vals[0][2] = 0;
+    M.vals[0][3] = 0;
+
+    M.vals[1][0] = 0;
+    M.vals[1][1] = 2 * n / (t - b);
+    M.vals[1][2] = 0;
+    M.vals[1][3] = 0;
+
+    M.vals[2][0] = (r + l) / (r - l);
+    M.vals[2][1] = (t + b) / (t - b);
+    M.vals[2][2] = -(f + n) / (f - n);
+    M.vals[2][3] = -1;
+
+    M.vals[3][0] = 0;
+    M.vals[3][1] = 0;
+    M.vals[3][2] = -2 * f * n / (f - n);
+    M.vals[3][3] = 0;
+
+    return M;
+}
+
 void SWRenderer::Render(float timeElapsed)
 {
-    float n = 0.01;
-    float f = 1000;
-    float fov = 75;
-    float aspectRatio = width / height;
+    float fov = 50;
+    float aspectRatio = (float)width / (float)height;
     float zNear = 0.01;
     float zFar = 1000;
-    float zRange = zNear - zFar;
-    float tanHalfFOV = tanf(fov / 2.0 / 180.f * M_PI);
-
+    
+    float canvasWidth = 1;
+    float canvasHeight = 1;
+    
     static float x = 0;
     static float y = 0;
     static float z = 0;
 
-    x += timeElapsed * 1;
-    y += timeElapsed * 1;
-    z += timeElapsed * 1;
+    x += timeElapsed * 0.5;
+    // y += timeElapsed * 0.5;
+    z += timeElapsed * 0.5;
 
-    Mat4x4f projectionMatrix{
-        {1.0f / (tanHalfFOV * aspectRatio), 0,                 0,                             0},
-        {0,                                 1.0f / tanHalfFOV, 0,                             0},
-        {0,                                 0,                 (-zNear - zFar) / zRange,      -1.f},
-        {0,                                 0,                 2.0f * zFar * zNear / zRange,  0}};
+    Mat4x4f projectionMatrix = perspective(fov, aspectRatio, zNear, zFar);
 
     Mat4x4f screenMatrix{
         {1.f * width, 0, 0, 0},
-        {0, 1.f * height, 0, -1.f * height},
+        {0, 1.f * height, 0, 0},
         {0, 0, 1, 0},
         {0, 0, 0, 1}};
 
     Mat4x4f R_x{
-        {1, 0, 0, 0},
-        {0, cos(x), -sin(x), 0},
-        {0, sin(x), cos(x), 0},
-        {0, 0, 0, 1}};
+        {1,  0,       0,      0},
+        {0,  cos(x),  sin(x), 0},
+        {0,  -sin(x), cos(x), 0},
+        {0,  0,       0,      1}};
 
     // Calculate rotation about y axis
     Mat4x4f R_y{
-        {cos(y), 0, sin(y), 0},
-        {0, 1, 0, 0},
-        {-sin(y), 0, cos(y), 0},
-        {0, 0, 0, 1}};
+        {cos(y), 0,  -sin(y), 0},
+        {0,      1,  0,       0},
+        {sin(y), 0,  cos(y),  0},
+        {0,      0,  0,       1}};
 
     // Calculate rotation about z axis
     Mat4x4f R_z{
-        {cos(z), -sin(z), 0, 0},
-        {sin(z), cos(z), 0, 0},
-        {0, 0, 1, 0},
-        {0, 0, 0, 1}};
+        {cos(z),  sin(z),  0,  0},
+        {-sin(z), cos(z),  0,  0},
+        {0,       0,       1,  0},
+        {0,       0,       0,  1}};
 
     canvas[bufferIndex]->Clear(0);
     constexpr int nbIndices = sizeof(indexList) / sizeof(indexList[0]);
@@ -223,30 +257,43 @@ void SWRenderer::Render(float timeElapsed)
         Vector3f v2{vertexList[indexList[i + 2] * 3], vertexList[indexList[i + 2] * 3 + 1], vertexList[indexList[i + 2] * 3 + 2]};
 
         Mat4x4f scaleMatrix{
-            {0.5, 0, 0, 0},
-            {0, 0.5, 0, 0},
-            {0, 0, 0.5, 0},
+            {1, 0, 0, 0},
+            {0, 1, 0, 0},
+            {0, 0, 1, 0},
             {0, 0, 0, 1},
         };
 
-        Mat4x4f translateMatrix{
+        Mat4x4f translateOriginMatrix{
             {1, 0, 0, 0},
             {0, 1, 0, 0},
             {0, 0, 1, 0},
             {-0.5, -0.5, -0.5, 1}};
 
-        Mat4x4f translate2Matrix{
+        Mat4x4f translateBackMatrix{
             {1, 0, 0, 0},
             {0, 1, 0, 0},
             {0, 0, 1, 0},
-            {0.5, 0.5, 6, 1}};
+            {0, 0, 0, 1}};
 
-        auto sv0 = v0 * translateMatrix * scaleMatrix * R_x * R_y * R_z * translate2Matrix * projectionMatrix * screenMatrix;
-        auto sv1 = v1 * translateMatrix * scaleMatrix * R_x * R_y * R_z * translate2Matrix * projectionMatrix * screenMatrix;
-        auto sv2 = v2 * translateMatrix * scaleMatrix * R_x * R_y * R_z * translate2Matrix * projectionMatrix * screenMatrix;
+        Mat4x4f translateMatrix{
+            {1, 0, 0, 0},
+            {0, 1, 0, 0},
+            {0, 0, 1, 0},
+            {0, 0, 7, 1}};
 
-        canvas[bufferIndex]->LineTo(sv0.x, sv0.y, sv1.x, sv1.y, 0xFFFFFFFF);
-        canvas[bufferIndex]->LineTo(sv1.x, sv1.y, sv2.x, sv2.y, 0xFFFFFFFF);
-        canvas[bufferIndex]->LineTo(sv2.x, sv2.y, sv0.x, sv0.y, 0xFFFFFFFF);
+        auto sv0 = v0 * translateOriginMatrix * scaleMatrix * R_x * R_y * R_z * translateBackMatrix * translateMatrix * projectionMatrix;
+        auto sv1 = v1 * translateOriginMatrix * scaleMatrix * R_x * R_y * R_z * translateBackMatrix * translateMatrix * projectionMatrix;
+        auto sv2 = v2 * translateOriginMatrix * scaleMatrix * R_x * R_y * R_z * translateBackMatrix * translateMatrix * projectionMatrix;
+        sv0 = sv0 / -sv0.z;
+        sv1 = sv1 / -sv1.z;
+        sv2 = sv2 / -sv2.z;
+
+        sv0 = Vector3f{ (sv0.x + canvasWidth / 2.f) / canvasWidth * width, (sv0.y + canvasHeight / 2.f) / canvasHeight * height };
+        sv1 = Vector3f{ (sv1.x + canvasWidth / 2.f) / canvasWidth * width, (sv1.y + canvasHeight / 2.f) / canvasHeight * height };
+        sv2 = Vector3f{ (sv2.x + canvasWidth / 2.f) / canvasWidth * width, (sv2.y + canvasHeight / 2.f) / canvasHeight * height };
+
+        canvas[bufferIndex]->LineTo(std::round(sv0.x), std::round(sv0.y), std::round(sv1.x), std::round(sv1.y), 0xFFFFFFFF);
+        canvas[bufferIndex]->LineTo(std::round(sv1.x), std::round(sv1.y), std::round(sv2.x), std::round(sv2.y), 0xFFFFFFFF);
+        canvas[bufferIndex]->LineTo(std::round(sv2.x), std::round(sv2.y), std::round(sv0.x), std::round(sv0.y), 0xFFFFFFFF);
     }
 }

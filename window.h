@@ -8,8 +8,8 @@ class Window
     TString mWindowClass;
     HWND hWnd;
     WNDCLASSEX mWcex;
-    int width = 500;
-    int height = 500;
+    int width = 1620;
+    int height = 937;
     HDC mHdc;
     std::unique_ptr<SWRenderer> renderer;
     std::thread renderTh;

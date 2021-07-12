@@ -38,20 +38,20 @@ struct BasicVector3
         return *this;
     }
 
-    DataType operator*(DataType l)
+    BasicVector3 operator*(DataType l)
     {
-        x *= l;
-        y *= l;
-        z *= l;
-        return *this;
+        return BasicVector3{
+            x * l,
+            y * l,
+            z * l};
     }
 
-    DataType operator/(DataType l)
+    BasicVector3 operator/(DataType l)
     {
-        x /= l;
-        y /= l;
-        z /= l;
-        return *this;
+        return BasicVector3{
+            x / l,
+            y / l,
+            z / l};
     }
 
     bool operator==(const BasicVector3 &vec)
