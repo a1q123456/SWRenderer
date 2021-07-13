@@ -22,20 +22,23 @@ struct BasicVector3
         return BasicVector3{y * vec.z - z * vec.y, z * vec.x - x * vec.z, x * vec.y - y * vec.x};
     }
 
-    BasicVector3 &operator+(const BasicVector3 &vec)
+    BasicVector3 operator+(const BasicVector3 &vec)
     {
-        x += vec.x;
-        y += vec.y;
-        z += vec.z;
-        return *this;
+        return BasicVector3
+        {
+            x + vec.x,
+            y + vec.y,
+            z + vec.z
+        };
     }
 
-    BasicVector3 &operator-(const BasicVector3 &vec)
+    BasicVector3 operator-(const BasicVector3 &vec)
     {
-        x -= vec.x;
-        y -= vec.y;
-        z -= vec.z;
-        return *this;
+        return BasicVector3{
+            x - vec.x,
+            y - vec.y,
+            z - vec.z,
+        };
     }
 
     BasicVector3 operator*(DataType l)

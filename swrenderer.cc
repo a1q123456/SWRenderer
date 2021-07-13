@@ -110,16 +110,19 @@ float vertexList[] = {
     1,
 
     // bottom
-    0,
-    0,
-    0,
-    0,
-    0,
     1,
+    0,
+    0,
+
     1,
     0,
     1,
+
+    0,
+    0,
     1,
+
+    0,
     0,
     0,
 
@@ -127,12 +130,15 @@ float vertexList[] = {
     0,
     1,
     0,
+
     0,
     1,
     1,
+
     1,
     1,
     1,
+
     1,
     1,
     0,
@@ -208,17 +214,17 @@ void SWRenderer::Render(float timeElapsed)
     float aspectRatio = (float)width / (float)height;
     float zNear = 0.01;
     float zFar = 1000;
-    
+
     float canvasWidth = 1;
     float canvasHeight = 1;
-    
+
     static float x = 0;
     static float y = 0;
     static float z = 0;
 
     x += timeElapsed * 0.5;
-    // y += timeElapsed * 0.5;
-    z += timeElapsed * 0.5;
+    //y += timeElapsed * 0.5;
+    z += timeElapsed * 0.3;
 
     Mat4x4f projectionMatrix = perspective(fov, aspectRatio, zNear, zFar);
 
@@ -229,24 +235,24 @@ void SWRenderer::Render(float timeElapsed)
         {0, 0, 0, 1}};
 
     Mat4x4f R_x{
-        {1,  0,       0,      0},
-        {0,  cos(x),  sin(x), 0},
-        {0,  -sin(x), cos(x), 0},
-        {0,  0,       0,      1}};
+        {1, 0, 0, 0},
+        {0, cos(x), sin(x), 0},
+        {0, -sin(x), cos(x), 0},
+        {0, 0, 0, 1}};
 
     // Calculate rotation about y axis
     Mat4x4f R_y{
-        {cos(y), 0,  -sin(y), 0},
-        {0,      1,  0,       0},
-        {sin(y), 0,  cos(y),  0},
-        {0,      0,  0,       1}};
+        {cos(y), 0, -sin(y), 0},
+        {0, 1, 0, 0},
+        {sin(y), 0, cos(y), 0},
+        {0, 0, 0, 1}};
 
     // Calculate rotation about z axis
     Mat4x4f R_z{
-        {cos(z),  sin(z),  0,  0},
-        {-sin(z), cos(z),  0,  0},
-        {0,       0,       1,  0},
-        {0,       0,       0,  1}};
+        {cos(z), sin(z), 0, 0},
+        {-sin(z), cos(z), 0, 0},
+        {0, 0, 1, 0},
+        {0, 0, 0, 1}};
 
     canvas[bufferIndex]->Clear(0);
     constexpr int nbIndices = sizeof(indexList) / sizeof(indexList[0]);
@@ -284,13 +290,35 @@ void SWRenderer::Render(float timeElapsed)
         auto sv0 = v0 * translateOriginMatrix * scaleMatrix * R_x * R_y * R_z * translateBackMatrix * translateMatrix * projectionMatrix;
         auto sv1 = v1 * translateOriginMatrix * scaleMatrix * R_x * R_y * R_z * translateBackMatrix * translateMatrix * projectionMatrix;
         auto sv2 = v2 * translateOriginMatrix * scaleMatrix * R_x * R_y * R_z * translateBackMatrix * translateMatrix * projectionMatrix;
+
         sv0 = sv0 / -sv0.z;
         sv1 = sv1 / -sv1.z;
         sv2 = sv2 / -sv2.z;
 
-        sv0 = Vector3f{ (sv0.x + canvasWidth / 2.f) / canvasWidth * width, (sv0.y + canvasHeight / 2.f) / canvasHeight * height };
-        sv1 = Vector3f{ (sv1.x + canvasWidth / 2.f) / canvasWidth * width, (sv1.y + canvasHeight / 2.f) / canvasHeight * height };
-        sv2 = Vector3f{ (sv2.x + canvasWidth / 2.f) / canvasWidth * width, (sv2.y + canvasHeight / 2.f) / canvasHeight * height };
+        // backface culling
+        auto t0 = sv1 - sv0;
+        auto t1 = sv2 - sv1;
+
+        if (t0.cross(t1).z > 0)
+        {
+            continue;
+        }
+
+        sv0 = Vector3f{(sv0.x + canvasWidth / 2.f) / canvasWidth, (sv0.y + canvasHeight / 2.f) / canvasHeight};
+        sv1 = Vector3f{(sv1.x + canvasWidth / 2.f) / canvasWidth, (sv1.y + canvasHeight / 2.f) / canvasHeight};
+        sv2 = Vector3f{(sv2.x + canvasWidth / 2.f) / canvasWidth, (sv2.y + canvasHeight / 2.f) / canvasHeight};
+
+        // frustum culling
+        if ((sv0.x < 0 || sv0.y < 0 || sv0.x > 1 || sv0.y > 1) &&
+            (sv1.x < 0 || sv1.y < 0 || sv1.x > 1 || sv1.y > 1) &&
+            (sv2.x < 0 || sv2.y < 0 || sv2.x > 1 || sv2.y > 1))
+        {
+            continue;
+        }
+
+        sv0 = Vector3f{sv0.x * width, sv0.y * height};
+        sv1 = Vector3f{sv1.x * width, sv1.y * height};
+        sv2 = Vector3f{sv2.x * width, sv2.y * height};
 
         canvas[bufferIndex]->LineTo(std::round(sv0.x), std::round(sv0.y), std::round(sv1.x), std::round(sv1.y), 0xFFFFFFFF);
         canvas[bufferIndex]->LineTo(std::round(sv1.x), std::round(sv1.y), std::round(sv2.x), std::round(sv2.y), 0xFFFFFFFF);
