@@ -1,6 +1,11 @@
 #include "swrenderer.h"
-#include "vec.h"
-#include "matrix.h"
+#include <glm/mat4x4.hpp>
+#include <glm/vec4.hpp>
+#include <glm/vec3.hpp>
+#include <glm/common.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/euler_angles.hpp>
 #define _USE_MATH_DEFINES
 #include <cmath>
 
@@ -49,100 +54,63 @@ HBITMAP SWRenderer::GetBitmap() const
     return bitmaps[bufferIndex];
 }
 
+// clang-format off
 float vertexList[] = {
     // front
-    0,
-    0,
-    0,
-    0,
-    1,
-    0,
-    1,
-    1,
-    0,
-    1,
-    0,
-    0,
+    0, 0, 0, 0, 0, 0,
+    0, 1, 0, 0, 1, 0,
+    1, 1, 0, 1, 1, 0,
+    1, 0, 0, 1, 0, 0,
 
     // left
-    0,
-    0,
-    1,
-    0,
-    1,
-    1,
-    0,
-    1,
-    0,
-    0,
-    0,
-    0,
+    0, 0, 1, 0, 0, 0,
+    0, 1, 1, 0, 1, 0,
+    0, 1, 0, 1, 1, 0,
+    0, 0, 0, 1, 0, 0,
 
     // back
-    1,
-    0,
-    1,
-
-    1,
-    1,
-    1,
-
-    0,
-    1,
-    1,
-
-    0,
-    0,
-    1,
+    1, 0, 1, 0, 0, 0,
+    1, 1, 1, 0, 1, 0,
+    0, 1, 1, 1, 1, 0,
+    0, 0, 1, 1, 0, 0,
 
     // right
-    1,
-    0,
-    0,
-    1,
-    1,
-    0,
-    1,
-    1,
-    1,
-    1,
-    0,
-    1,
+    1, 0, 0, 0, 0, 0,
+    1, 1, 0, 0, 1, 0,
+    1, 1, 1, 1, 1, 0,
+    1, 0, 1, 1, 0, 0,
 
     // bottom
-    1,
-    0,
-    0,
-
-    1,
-    0,
-    1,
-
-    0,
-    0,
-    1,
-
-    0,
-    0,
-    0,
+    1, 0, 0, 0, 0, 0,
+    1, 0, 1, 0, 1, 0,
+    0, 0, 1, 1, 1, 0,
+    0, 0, 0, 1, 0, 0,
 
     // top
-    0,
-    1,
-    0,
+    0, 1, 0, 0, 0, 0,
+    0, 1, 1, 0, 1, 0,
+    1, 1, 1, 1, 1, 0,
+    1, 1, 0, 1, 0, 0,
+    };
 
-    0,
-    1,
-    1,
-
-    1,
-    1,
-    1,
-
-    1,
-    1,
-    0,
+// clang-format on
+enum VertexElementType
+{
+    VET_POSITION,
+    VET_UV,
+    VET_NORMAL
 };
+
+enum DataType
+{
+    DT_FLOAT3 = sizeof(float) * 3,
+    DT_FLOAT2 = sizeof(float) * 2,
+    DT_FLOAT1 = sizeof(float) * 1
+};
+
+const int vertexLayout[]{
+    VET_POSITION, DT_FLOAT3,
+    VET_UV, DT_FLOAT3};
 
 int indexList[] = {
     // front
@@ -169,45 +137,6 @@ int indexList[] = {
     20, 21, 22,
     20, 22, 23};
 
-float fpi()
-{
-    return atan(1.f) * 4;
-}
-
-Mat4x4f perspective(
-    const float &angleOfView,
-    const float &imageAspectRatio,
-    const float &n, const float &f)
-{
-    float r, l, b, t;
-    float scale = tan(angleOfView * 0.5 * fpi() / 180.f) * n;
-    r = imageAspectRatio * scale, l = -r;
-    t = scale, b = -t;
-
-    Mat4x4f M;
-    M.vals[0][0] = 2 * n / (r - l);
-    M.vals[0][1] = 0;
-    M.vals[0][2] = 0;
-    M.vals[0][3] = 0;
-
-    M.vals[1][0] = 0;
-    M.vals[1][1] = 2 * n / (t - b);
-    M.vals[1][2] = 0;
-    M.vals[1][3] = 0;
-
-    M.vals[2][0] = (r + l) / (r - l);
-    M.vals[2][1] = (t + b) / (t - b);
-    M.vals[2][2] = -(f + n) / (f - n);
-    M.vals[2][3] = -1;
-
-    M.vals[3][0] = 0;
-    M.vals[3][1] = 0;
-    M.vals[3][2] = -2 * f * n / (f - n);
-    M.vals[3][3] = 0;
-
-    return M;
-}
-
 void SWRenderer::Render(float timeElapsed)
 {
     float fov = 50;
@@ -223,90 +152,84 @@ void SWRenderer::Render(float timeElapsed)
     static float z = 0;
 
     x += timeElapsed * 0.5;
-    //y += timeElapsed * 0.5;
+    // y += timeElapsed * 0.1;
     z += timeElapsed * 0.3;
 
-    Mat4x4f projectionMatrix = perspective(fov, aspectRatio, zNear, zFar);
-
-    Mat4x4f screenMatrix{
-        {1.f * width, 0, 0, 0},
-        {0, 1.f * height, 0, 0},
-        {0, 0, 1, 0},
-        {0, 0, 0, 1}};
-
-    Mat4x4f R_x{
-        {1, 0, 0, 0},
-        {0, cos(x), sin(x), 0},
-        {0, -sin(x), cos(x), 0},
-        {0, 0, 0, 1}};
-
-    // Calculate rotation about y axis
-    Mat4x4f R_y{
-        {cos(y), 0, -sin(y), 0},
-        {0, 1, 0, 0},
-        {sin(y), 0, cos(y), 0},
-        {0, 0, 0, 1}};
-
-    // Calculate rotation about z axis
-    Mat4x4f R_z{
-        {cos(z), sin(z), 0, 0},
-        {-sin(z), cos(z), 0, 0},
-        {0, 0, 1, 0},
-        {0, 0, 0, 1}};
+    auto viewTransform = glm::lookAt(glm::vec3{ 0, 0, 7 }, glm::vec3{0, 0, 0}, glm::vec3{0, 1, 0});
+    auto projectionMatrix = glm::perspective(glm::radians(55.f), aspectRatio, zNear, zFar);
+    auto scaleMatrix = glm::scale(glm::identity<glm::mat4>(), glm::vec3{1, 1, 1});
+    auto translateOriginMatrix = glm::translate(glm::identity<glm::mat4>(), glm::vec3{-0.5, -0.5, -0.5});
+    auto translateBackMatrix = glm::identity<glm::mat4>();
+    auto translateMatrix = glm::translate(glm::identity<glm::mat4>(), glm::vec3{0, 0, 0});
+    auto rotationMatrix = glm::eulerAngleXYZ(x, y, z);
+    auto modelTransform = translateMatrix * translateBackMatrix * rotationMatrix * scaleMatrix * translateOriginMatrix;
+    auto projWorld = projectionMatrix * (viewTransform) * modelTransform;
 
     canvas[bufferIndex]->Clear(0);
     constexpr int nbIndices = sizeof(indexList) / sizeof(indexList[0]);
+    constexpr int nbLayoutElement = sizeof(vertexLayout) / sizeof(vertexLayout[0]);
+    int szElement = 0;
+    for (int i = 0; i < 4; i += 2)
+    {
+        szElement += vertexLayout[(i + 1)];
+    }
+    szElement /= sizeof(float);
     for (int i = 0; i < nbIndices; i += 3)
     {
-        Vector3f v0{vertexList[indexList[i] * 3], vertexList[indexList[i] * 3 + 1], vertexList[indexList[i] * 3 + 2]};
-        Vector3f v1{vertexList[indexList[i + 1] * 3], vertexList[indexList[i + 1] * 3 + 1], vertexList[indexList[i + 1] * 3 + 2]};
-        Vector3f v2{vertexList[indexList[i + 2] * 3], vertexList[indexList[i + 2] * 3 + 1], vertexList[indexList[i + 2] * 3 + 2]};
+        glm::vec3 v0;
+        glm::vec3 v1;
+        glm::vec3 v2;
 
-        Mat4x4f scaleMatrix{
-            {1, 0, 0, 0},
-            {0, 1, 0, 0},
-            {0, 0, 1, 0},
-            {0, 0, 0, 1},
-        };
+        glm::vec3 uv0;
+        glm::vec3 uv1;
+        glm::vec3 uv2;
 
-        Mat4x4f translateOriginMatrix{
-            {1, 0, 0, 0},
-            {0, 1, 0, 0},
-            {0, 0, 1, 0},
-            {-0.5, -0.5, -0.5, 1}};
+        int offset = 0;
+        for (int j = 0; j < nbLayoutElement; j += 2)
+        {
+            if (vertexLayout[j] == VET_POSITION)
+            {
+                v0 = glm::vec3{vertexList[indexList[i + 0] * szElement + offset], vertexList[indexList[i + 0] * szElement + 1 + offset], vertexList[indexList[i + 0] * szElement + 2 + offset]};
+                v1 = glm::vec3{vertexList[indexList[i + 1] * szElement + offset], vertexList[indexList[i + 1] * szElement + 1 + offset], vertexList[indexList[i + 1] * szElement + 2 + offset]};
+                v2 = glm::vec3{vertexList[indexList[i + 2] * szElement + offset], vertexList[indexList[i + 2] * szElement + 1 + offset], vertexList[indexList[i + 2] * szElement + 2 + offset]};
+                offset += vertexLayout[j + 1];
+            }
+            else if (vertexLayout[j] == VET_UV)
+            {
+                uv0 = glm::vec3{vertexList[indexList[i + 0] * szElement + offset], vertexList[indexList[i + 0] * szElement + 1 + offset], vertexList[indexList[i + 0] * szElement + 2 + offset]};
+                uv1 = glm::vec3{vertexList[indexList[i + 1] * szElement + offset], vertexList[indexList[i + 1] * szElement + 1 + offset], vertexList[indexList[i + 1] * szElement + 2 + offset]};
+                uv2 = glm::vec3{vertexList[indexList[i + 2] * szElement + offset], vertexList[indexList[i + 2] * szElement + 1 + offset], vertexList[indexList[i + 2] * szElement + 2 + offset]};
+            }
+        }
 
-        Mat4x4f translateBackMatrix{
-            {1, 0, 0, 0},
-            {0, 1, 0, 0},
-            {0, 0, 1, 0},
-            {0, 0, 0, 1}};
+        auto pv0 = projWorld * glm::vec4{v0, 1};
+        auto pv1 = projWorld * glm::vec4{v1, 1};
+        auto pv2 = projWorld * glm::vec4{v2, 1};
 
-        Mat4x4f translateMatrix{
-            {1, 0, 0, 0},
-            {0, 1, 0, 0},
-            {0, 0, 1, 0},
-            {0, 0, 7, 1}};
+        pv0 = pv0 * projectionMatrix;
+        pv1 = pv1 * projectionMatrix;
+        pv2 = pv2 * projectionMatrix;
 
-        auto sv0 = v0 * translateOriginMatrix * scaleMatrix * R_x * R_y * R_z * translateBackMatrix * translateMatrix * projectionMatrix;
-        auto sv1 = v1 * translateOriginMatrix * scaleMatrix * R_x * R_y * R_z * translateBackMatrix * translateMatrix * projectionMatrix;
-        auto sv2 = v2 * translateOriginMatrix * scaleMatrix * R_x * R_y * R_z * translateBackMatrix * translateMatrix * projectionMatrix;
+        auto ov0 = pv0;
+        auto ov1 = pv1;
+        auto ov2 = pv2;
 
-        sv0 = sv0 / -sv0.z;
-        sv1 = sv1 / -sv1.z;
-        sv2 = sv2 / -sv2.z;
+        auto sv0 = glm::vec3{pv0 / -pv0.z};
+        auto sv1 = glm::vec3{pv1 / -pv1.z};
+        auto sv2 = glm::vec3{pv2 / -pv2.z};
 
         // backface culling
         auto t0 = sv1 - sv0;
         auto t1 = sv2 - sv1;
 
-        if (t0.cross(t1).z > 0)
+        if (glm::cross(t0, t1).z < 0)
         {
             continue;
         }
 
-        sv0 = Vector3f{(sv0.x + canvasWidth / 2.f) / canvasWidth, (sv0.y + canvasHeight / 2.f) / canvasHeight};
-        sv1 = Vector3f{(sv1.x + canvasWidth / 2.f) / canvasWidth, (sv1.y + canvasHeight / 2.f) / canvasHeight};
-        sv2 = Vector3f{(sv2.x + canvasWidth / 2.f) / canvasWidth, (sv2.y + canvasHeight / 2.f) / canvasHeight};
+        sv0 = glm::vec3{(sv0.x + canvasWidth / 2.f) / canvasWidth, (sv0.y + canvasHeight / 2.f) / canvasHeight, ov0.z};
+        sv1 = glm::vec3{(sv1.x + canvasWidth / 2.f) / canvasWidth, (sv1.y + canvasHeight / 2.f) / canvasHeight, ov1.z};
+        sv2 = glm::vec3{(sv2.x + canvasWidth / 2.f) / canvasWidth, (sv2.y + canvasHeight / 2.f) / canvasHeight, ov2.z};
 
         // frustum culling
         if ((sv0.x < 0 || sv0.y < 0 || sv0.x > 1 || sv0.y > 1) &&
@@ -316,12 +239,14 @@ void SWRenderer::Render(float timeElapsed)
             continue;
         }
 
-        sv0 = Vector3f{sv0.x * width, sv0.y * height};
-        sv1 = Vector3f{sv1.x * width, sv1.y * height};
-        sv2 = Vector3f{sv2.x * width, sv2.y * height};
+        glm::vec2 rv0{sv0.x * width, sv0.y * height};
+        glm::vec2 rv1{sv1.x * width, sv1.y * height};
+        glm::vec2 rv2{sv2.x * width, sv2.y * height};
 
-        canvas[bufferIndex]->LineTo(std::round(sv0.x), std::round(sv0.y), std::round(sv1.x), std::round(sv1.y), 0xFFFFFFFF);
-        canvas[bufferIndex]->LineTo(std::round(sv1.x), std::round(sv1.y), std::round(sv2.x), std::round(sv2.y), 0xFFFFFFFF);
-        canvas[bufferIndex]->LineTo(std::round(sv2.x), std::round(sv2.y), std::round(sv0.x), std::round(sv0.y), 0xFFFFFFFF);
+        canvas[bufferIndex]->LineTo(std::round(rv0.x), std::round(rv0.y), std::round(rv1.x), std::round(rv1.y), 0xFFFFFFFF);
+        canvas[bufferIndex]->LineTo(std::round(rv1.x), std::round(rv1.y), std::round(rv2.x), std::round(rv2.y), 0xFFFFFFFF);
+        canvas[bufferIndex]->LineTo(std::round(rv2.x), std::round(rv2.y), std::round(rv0.x), std::round(rv0.y), 0xFFFFFFFF);
+
+        // texturing
     }
 }

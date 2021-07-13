@@ -6,7 +6,8 @@ add_executable(swengine WIN32  "main.cc" "window.cc" "win32exception.cc" "swrend
 
 target_compile_definitions(swengine PRIVATE NOMINMAX)
 target_precompile_headers(swengine PRIVATE pch.h)
-
+find_package(glm CONFIG REQUIRED)
+target_link_libraries(swengine PRIVATE glm::glm)
 
 set_target_properties(swengine PROPERTIES
     CXX_STANDARD 17
