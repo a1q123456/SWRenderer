@@ -152,10 +152,10 @@ void SWRenderer::Render(float timeElapsed)
     static float z = 0;
 
     x += timeElapsed * 0.5;
-    // y += timeElapsed * 0.1;
+    //y += timeElapsed * 0.1;
     z += timeElapsed * 0.3;
 
-    auto viewTransform = glm::lookAt(glm::vec3{ 0, 0, 7 }, glm::vec3{0, 0, 0}, glm::vec3{0, 1, 0});
+    auto viewTransform = glm::lookAt(glm::vec3{ 0, 0, -7 }, glm::vec3{0, 0, 0}, glm::vec3{0, 1, 0});
     auto projectionMatrix = glm::perspective(glm::radians(55.f), aspectRatio, zNear, zFar);
     auto scaleMatrix = glm::scale(glm::identity<glm::mat4>(), glm::vec3{1, 1, 1});
     auto translateOriginMatrix = glm::translate(glm::identity<glm::mat4>(), glm::vec3{-0.5, -0.5, -0.5});
@@ -163,7 +163,7 @@ void SWRenderer::Render(float timeElapsed)
     auto translateMatrix = glm::translate(glm::identity<glm::mat4>(), glm::vec3{0, 0, 0});
     auto rotationMatrix = glm::eulerAngleXYZ(x, y, z);
     auto modelTransform = translateMatrix * translateBackMatrix * rotationMatrix * scaleMatrix * translateOriginMatrix;
-    auto projWorld = projectionMatrix * (viewTransform) * modelTransform;
+    auto projWorld = projectionMatrix * glm::inverse(viewTransform) * modelTransform;
 
     canvas[bufferIndex]->Clear(0);
     constexpr int nbIndices = sizeof(indexList) / sizeof(indexList[0]);
@@ -227,17 +227,16 @@ void SWRenderer::Render(float timeElapsed)
             continue;
         }
 
+        // // frustum culling
+        // if ()
+        // {
+        //     continue;
+        // }
+
         sv0 = glm::vec3{(sv0.x + canvasWidth / 2.f) / canvasWidth, (sv0.y + canvasHeight / 2.f) / canvasHeight, ov0.z};
         sv1 = glm::vec3{(sv1.x + canvasWidth / 2.f) / canvasWidth, (sv1.y + canvasHeight / 2.f) / canvasHeight, ov1.z};
         sv2 = glm::vec3{(sv2.x + canvasWidth / 2.f) / canvasWidth, (sv2.y + canvasHeight / 2.f) / canvasHeight, ov2.z};
 
-        // frustum culling
-        if ((sv0.x < 0 || sv0.y < 0 || sv0.x > 1 || sv0.y > 1) &&
-            (sv1.x < 0 || sv1.y < 0 || sv1.x > 1 || sv1.y > 1) &&
-            (sv2.x < 0 || sv2.y < 0 || sv2.x > 1 || sv2.y > 1))
-        {
-            continue;
-        }
 
         glm::vec2 rv0{sv0.x * width, sv0.y * height};
         glm::vec2 rv1{sv1.x * width, sv1.y * height};
@@ -248,5 +247,6 @@ void SWRenderer::Render(float timeElapsed)
         canvas[bufferIndex]->LineTo(std::round(rv2.x), std::round(rv2.y), std::round(rv0.x), std::round(rv0.y), 0xFFFFFFFF);
 
         // texturing
+        
     }
 }
