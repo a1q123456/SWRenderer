@@ -10,9 +10,18 @@ class SWRenderer
     std::unique_ptr<Canvas> canvas[2];
     HBITMAP bitmaps[2];
     std::uint8_t *buffer[2];
-    volatile long bufferIndex = 0;
-    int bufferLinesize = 0;
-    void UpdateBuffer(std::uint8_t *data, int srcWidth, int srcHeight, int linesize);
+    long bufferIndex = 0;
+    float* zBuffer = nullptr;
+    bool depthTestEnabled = true;
+    bool depthWriteEnabled = true;
+    bool backFaceCulling = true;
+    
+    std::uint8_t* textureData = nullptr;
+    int textureW = 0;
+    int textureH = 0;
+    int textureChannels = 0;
+
+    void ClearZBuffer();
 
 public:
     void CreateBuffer(int pixelFormat);

@@ -8,17 +8,29 @@
 #include <glm/gtx/euler_angles.hpp>
 #define _USE_MATH_DEFINES
 #include <cmath>
+#include <vector>
+#include <algorithm>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
 SWRenderer::SWRenderer(HDC hdc, int w, int h) : hdc(hdc), width(w), height(h)
 {
     memDc = ::CreateCompatibleDC(hdc);
+
+    textureData = stbi_load("D:\\Desktop\\a.png", &textureW, &textureH, &textureChannels, STBI_rgb_alpha);
+}
+
+void SWRenderer::ClearZBuffer()
+{
+    for (int i = 0; i < width * height; i++)
+    {
+        zBuffer[i] = std::numeric_limits<float>::infinity();
+    }
 }
 
 void SWRenderer::CreateBuffer(int pixelFormat)
 {
     constexpr auto nBuffer = sizeof(buffer) / sizeof(buffer[0]);
-    constexpr auto align = (32 / 8);
-    bufferLinesize = (width / align) + (align - (width % align));
 
     BITMAPINFO bm = {sizeof(BITMAPINFOHEADER),
                      width,
@@ -30,18 +42,7 @@ void SWRenderer::CreateBuffer(int pixelFormat)
         bitmaps[i] = CreateDIBSection(memDc, &bm, DIB_RGB_COLORS, (void **)&buffer[i], 0, 0);
         canvas[i] = std::make_unique<Canvas>(memDc, bitmaps[i], width, height);
     }
-}
-
-void SWRenderer::UpdateBuffer(std::uint8_t *data, int srcWidth, int srcHeight, int linesize)
-{
-    int idx = !bufferIndex;
-    auto h = std::min(height, srcHeight);
-    auto w = std::min(width, srcWidth);
-    for (auto i = 0; i < h; i++)
-    {
-        memcpy(buffer[idx] + (i * bufferLinesize), data + (i * linesize), w);
-    }
-    InterlockedExchange(&bufferIndex, idx);
+    zBuffer = new float[width * height];
 }
 
 void SWRenderer::SwapBuffer()
@@ -137,8 +138,81 @@ int indexList[] = {
     20, 21, 22,
     20, 22, 23};
 
+struct Triangle
+{
+    glm::vec3 p0, p1, p2;
+    glm::vec3 uv0, uv1, uv2;
+
+    glm::vec3 min, max;
+
+    float avg;
+
+    Triangle() = default;
+    Triangle(
+        const glm::vec3 &a,
+        const glm::vec3 &b,
+        const glm::vec3 &c,
+        const glm::vec3 &uv0,
+        const glm::vec3 &uv1,
+        const glm::vec3 &uv2) : p0(a),
+                                p1(b),
+                                p2(c),
+                                uv0(uv0),
+                                uv1(uv1),
+                                uv2(uv2),
+                                min(glm::vec3{
+                                    std::min(std::min(a.x, b.x), c.x),
+                                    std::min(std::min(a.y, b.y), c.y),
+                                    std::min(std::min(a.z, b.z), c.z)}),
+                                max(glm::vec3{
+                                    std::max(std::max(a.x, b.x), c.x),
+                                    std::max(std::max(a.y, b.y), c.y),
+                                    std::max(std::max(a.z, b.z), c.z)})
+
+    {
+        auto avgTri = (a + b + c);
+        avgTri /= 3.0;
+
+        avg = (avgTri.x + avgTri.y + avgTri.z) / 3.0;
+    }
+
+    bool inRange(const glm::vec3 &pt) const noexcept
+    {
+        return pt.x >= min.x && pt.y >= min.y && pt.x <= max.x && pt.y <= max.y;
+    }
+
+    glm::vec3 barycentric(const glm::vec3 &pt)
+    {
+        glm::vec3 a{p0};
+        glm::vec3 b{p1};
+        glm::vec3 c{p2};
+
+        glm::vec3 tmp{1, 1, 0};
+        a *= tmp;
+        b *= tmp;
+        c *= tmp;
+
+        glm::vec3 l0 = b - a;
+        glm::vec3 l1 = c - b;
+        glm::vec3 l2 = a - c;
+
+        glm::vec3 pa = pt - a;
+        glm::vec3 pb = pt - b;
+        glm::vec3 pc = pt - c;
+
+        auto ca = glm::cross(l0, pa);
+        auto cb = glm::cross(l1, pb);
+        auto cc = glm::cross(l2, pc);
+        auto ct = glm::cross(l0, l1);
+        auto ret = glm::vec3{cb.z, cc.z, ca.z} / ct.z;
+
+        return ret;
+    }
+};
+
 void SWRenderer::Render(float timeElapsed)
 {
+
     float fov = 50;
     float aspectRatio = (float)width / (float)height;
     float zNear = 0.01;
@@ -155,7 +229,12 @@ void SWRenderer::Render(float timeElapsed)
     //y += timeElapsed * 0.1;
     z += timeElapsed * 0.3;
 
-    auto viewTransform = glm::lookAt(glm::vec3{ 0, 0, -7 }, glm::vec3{0, 0, 0}, glm::vec3{0, 1, 0});
+    glm::vec4 omniLight{10, 10, 10, 1};
+    glm::vec3 lightColor{1, 1, 1};
+    float lightIntensity = 2.0;
+    float lightFadeFactor = 1500;
+
+    auto viewTransform = glm::lookAt(glm::vec3{0, 0, -7}, glm::vec3{0, 0, 0}, glm::vec3{0, 1, 0});
     auto projectionMatrix = glm::perspective(glm::radians(55.f), aspectRatio, zNear, zFar);
     auto scaleMatrix = glm::scale(glm::identity<glm::mat4>(), glm::vec3{1, 1, 1});
     auto translateOriginMatrix = glm::translate(glm::identity<glm::mat4>(), glm::vec3{-0.5, -0.5, -0.5});
@@ -165,7 +244,6 @@ void SWRenderer::Render(float timeElapsed)
     auto modelTransform = translateMatrix * translateBackMatrix * rotationMatrix * scaleMatrix * translateOriginMatrix;
     auto projWorld = projectionMatrix * glm::inverse(viewTransform) * modelTransform;
 
-    canvas[bufferIndex]->Clear(0);
     constexpr int nbIndices = sizeof(indexList) / sizeof(indexList[0]);
     constexpr int nbLayoutElement = sizeof(vertexLayout) / sizeof(vertexLayout[0]);
     int szElement = 0;
@@ -174,6 +252,8 @@ void SWRenderer::Render(float timeElapsed)
         szElement += vertexLayout[(i + 1)];
     }
     szElement /= sizeof(float);
+    std::vector<Triangle> triangleList;
+
     for (int i = 0; i < nbIndices; i += 3)
     {
         glm::vec3 v0;
@@ -206,23 +286,23 @@ void SWRenderer::Render(float timeElapsed)
         auto pv1 = projWorld * glm::vec4{v1, 1};
         auto pv2 = projWorld * glm::vec4{v2, 1};
 
-        pv0 = pv0 * projectionMatrix;
-        pv1 = pv1 * projectionMatrix;
-        pv2 = pv2 * projectionMatrix;
+        pv0 = projectionMatrix * pv0;
+        pv1 = projectionMatrix * pv1;
+        pv2 = projectionMatrix * pv2;
 
         auto ov0 = pv0;
         auto ov1 = pv1;
         auto ov2 = pv2;
 
-        auto sv0 = glm::vec3{pv0 / -pv0.z};
-        auto sv1 = glm::vec3{pv1 / -pv1.z};
-        auto sv2 = glm::vec3{pv2 / -pv2.z};
+        auto sv0 = glm::vec3{pv0 / pv0.z};
+        auto sv1 = glm::vec3{pv1 / pv1.z};
+        auto sv2 = glm::vec3{pv2 / pv2.z};
 
         // backface culling
         auto t0 = sv1 - sv0;
         auto t1 = sv2 - sv1;
 
-        if (glm::cross(t0, t1).z < 0)
+        if (backFaceCulling && glm::cross(t0, t1).z < 0)
         {
             continue;
         }
@@ -237,16 +317,78 @@ void SWRenderer::Render(float timeElapsed)
         sv1 = glm::vec3{(sv1.x + canvasWidth / 2.f) / canvasWidth, (sv1.y + canvasHeight / 2.f) / canvasHeight, ov1.z};
         sv2 = glm::vec3{(sv2.x + canvasWidth / 2.f) / canvasWidth, (sv2.y + canvasHeight / 2.f) / canvasHeight, ov2.z};
 
+        glm::vec3 rv0{sv0.x * width, (1.0 - sv0.y) * height, -sv0.z};
+        glm::vec3 rv1{sv1.x * width, (1.0 - sv1.y) * height, -sv1.z};
+        glm::vec3 rv2{sv2.x * width, (1.0 - sv2.y) * height, -sv2.z};
 
-        glm::vec2 rv0{sv0.x * width, sv0.y * height};
-        glm::vec2 rv1{sv1.x * width, sv1.y * height};
-        glm::vec2 rv2{sv2.x * width, sv2.y * height};
+        uv0 /= rv0.z;
+        uv1 /= rv1.z;
+        uv2 /= rv2.z;
 
-        canvas[bufferIndex]->LineTo(std::round(rv0.x), std::round(rv0.y), std::round(rv1.x), std::round(rv1.y), 0xFFFFFFFF);
-        canvas[bufferIndex]->LineTo(std::round(rv1.x), std::round(rv1.y), std::round(rv2.x), std::round(rv2.y), 0xFFFFFFFF);
-        canvas[bufferIndex]->LineTo(std::round(rv2.x), std::round(rv2.y), std::round(rv0.x), std::round(rv0.y), 0xFFFFFFFF);
+        triangleList.emplace_back(rv0, rv1, rv2, uv0, uv1, uv2);
+
+        // canvas[bufferIndex]->LineTo(std::round(rv0.x), std::round(rv0.y), std::round(rv1.x), std::round(rv1.y), 0xFFFFFFFF);
+        // canvas[bufferIndex]->LineTo(std::round(rv1.x), std::round(rv1.y), std::round(rv2.x), std::round(rv2.y), 0xFFFFFFFF);
+        // canvas[bufferIndex]->LineTo(std::round(rv2.x), std::round(rv2.y), std::round(rv0.x), std::round(rv0.y), 0xFFFFFFFF);
 
         // texturing
-        
+    }
+
+    omniLight = projectionMatrix * omniLight;
+    omniLight = glm::vec4{omniLight.x / omniLight.z, omniLight.y / omniLight.z, omniLight.z, 1};
+    omniLight = glm::vec4{(omniLight.x + canvasWidth / 2.f) / canvasWidth, (omniLight.y + canvasHeight / 2.f) / canvasHeight, omniLight.z, 1.0};
+    omniLight = glm::vec4{omniLight.x * width, (1.0 - omniLight.y) * height, -omniLight.z, 1.0};
+
+    canvas[bufferIndex]->Clear(0);
+    ClearZBuffer();
+
+    // for cache friendly
+    std::sort(std::begin(triangleList), std::end(triangleList), [](const Triangle &a, const Triangle &b)
+              { return a.avg < b.avg; });
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            glm::vec3 pt{x, y, 0};
+
+            for (auto &&tri : triangleList)
+            {
+                if (!tri.inRange(pt))
+                {
+                    continue;
+                }
+                auto weight = tri.barycentric(pt);
+                if (weight.x < 0 || weight.y < 0 || weight.z < 0)
+                {
+                    continue;
+                }
+
+                auto fragx = 1.0 / (1.0 / tri.p0.x * weight.x + 1.0 / tri.p1.x * weight.y + 1.0 / tri.p2.x * weight.z);
+                auto fragy = 1.0 / (1.0 / tri.p0.y * weight.x + 1.0 / tri.p1.y * weight.y + 1.0 / tri.p2.y * weight.z);
+                auto fragz = 1.0 / (1.0 / tri.p0.z * weight.x + 1.0 / tri.p1.z * weight.y + 1.0 / tri.p2.z * weight.z);
+
+                glm::vec4 fragPos{fragx, fragy, fragz, 1};
+
+                if (depthTestEnabled && zBuffer[y * width + x] < fragz)
+                {
+                    continue;
+                }
+                if (depthWriteEnabled)
+                {
+                    zBuffer[y * width + x] = fragz;
+                }
+                auto uvw = tri.uv0 * weight.x + tri.uv1 * weight.y + tri.uv2 * weight.z;
+                uvw *= fragz;
+                uvw.x = 1.0 - uvw.x;
+                auto imgX = std::clamp((int)std::round(uvw.x * textureW), 0, textureW - 1);
+                auto imgY = std::clamp((int)std::round(uvw.y * textureH), 0, textureH - 1);
+                auto lightDistance = glm::distance(omniLight, fragPos);
+                auto lightValue = (1.0 - glm::clamp(lightDistance, 0.f, lightFadeFactor) / lightFadeFactor) * lightIntensity;
+
+                buffer[bufferIndex][y * width * 4 + x * 4 + 0] = std::clamp<std::uint8_t>(textureData[imgY * textureW * 4 + imgX * 4 + 2] * lightValue, 0, 255);
+                buffer[bufferIndex][y * width * 4 + x * 4 + 1] = std::clamp<std::uint8_t>(textureData[imgY * textureW * 4 + imgX * 4 + 1] * lightValue, 0, 255);
+                buffer[bufferIndex][y * width * 4 + x * 4 + 2] = std::clamp<std::uint8_t>(textureData[imgY * textureW * 4 + imgX * 4 + 0] * lightValue, 0, 255);
+            }
+        }
     }
 }
