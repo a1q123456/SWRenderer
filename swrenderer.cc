@@ -17,7 +17,7 @@ SWRenderer::SWRenderer(HDC hdc, int w, int h) : hdc(hdc), width(w), height(h)
 {
     memDc = ::CreateCompatibleDC(hdc);
 
-    textureData = stbi_load("D:\\Desktop\\a.png", &textureW, &textureH, &textureChannels, STBI_rgb_alpha);
+    textureData.reset(stbi_load("D:\\Desktop\\1059544.jpg", &textureW, &textureH, &textureChannels, STBI_rgb_alpha), stbi_image_free);
 }
 
 void SWRenderer::ClearZBuffer()

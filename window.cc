@@ -29,6 +29,15 @@ LRESULT CALLBACK Window::WndProc(
     return 0;
 }
 
+Window::~Window()
+{
+    stop = true;
+    try
+    {
+        renderTh.join();
+    } catch (...) {}
+}
+
 Window::Window(
     HINSTANCE hInstance,
     HINSTANCE hPrevInstance,
@@ -104,7 +113,7 @@ Window::Window(
     renderTh = std::thread{[=]()
                            {
                                auto lastTime = std::chrono::steady_clock::now();
-                               while (true)
+                               while (!stop)
                                {
                                    renderer->SwapBuffer();
                                    auto now = std::chrono::steady_clock::now();

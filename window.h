@@ -13,6 +13,7 @@ class Window
     HDC mHdc;
     std::unique_ptr<SWRenderer> renderer;
     std::thread renderTh;
+    volatile bool stop = false;
 
     static LRESULT CALLBACK WndProc(
         _In_ HWND hWnd,
@@ -20,13 +21,14 @@ class Window
         _In_ WPARAM wParam,
         _In_ LPARAM lParam);
 public:
+    ~Window();
     Window(
         HINSTANCE hInstance,
         HINSTANCE hPrevInstance,
         LPSTR lpCmdLine,
         int nShowCmd,
-        const TString &title = _T("Windows Desktop Guided Tour Application"),
-        const TString &windowClass = _T("DesktopApp"));
+        const TString &title = _T("Software Renderer"),
+        const TString &windowClass = _T("SWRenderer"));
     Window(const Window&) = delete;
     Window& operator=(const Window&) = delete;
     int Width() const;

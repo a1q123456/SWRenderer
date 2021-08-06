@@ -16,7 +16,7 @@ class SWRenderer
     bool depthWriteEnabled = true;
     bool backFaceCulling = true;
     
-    std::uint8_t* textureData = nullptr;
+    std::shared_ptr<std::uint8_t[]> textureData;
     int textureW = 0;
     int textureH = 0;
     int textureChannels = 0;
