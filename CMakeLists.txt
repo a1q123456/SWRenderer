@@ -10,7 +10,7 @@ find_package(glm CONFIG REQUIRED)
 target_link_libraries(swengine PRIVATE glm::glm)
 find_package(Stb REQUIRED)
 target_include_directories(swengine PRIVATE Stb_INCLUDE_DIR)
-
+target_compile_options(swengine PRIVATE /openmp)
 set_target_properties(swengine PROPERTIES
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON

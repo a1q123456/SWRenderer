@@ -22,3 +22,18 @@ void Canvas::LineTo(int x0, int y0, int x1, int y1, std::uint32_t color)
     SelectObject(hdc, old);
     DeleteObject(hPen);
 }
+
+void Canvas::AddText(int x, int y, int size, const TString &str, std::uint32_t color)
+{
+    auto old = ::SelectObject(hdc, bitmap);
+    HPEN hPen = CreatePen(PS_SOLID, 1, color & 0x00FFFFFF);
+    auto oldPen = ::SelectObject(hdc, hPen);
+    ::MoveToEx(hdc, x, y, nullptr);
+    RECT rect;
+    ZeroMemory(&rect, sizeof(rect));
+    ::DrawText(hdc, str.c_str(), str.size(), &rect, DT_CALCRECT);
+    ::DrawText(hdc, str.c_str(), str.size(), &rect, DT_LEFT);
+    SelectObject(hdc, oldPen);
+    SelectObject(hdc, old);
+    DeleteObject(hPen);
+}

@@ -23,6 +23,13 @@ class SWRenderer
 
     void ClearZBuffer();
 
+    glm::vec3 cubeRotation = glm::vec3{0, 0, 0};
+    HWND hwnd = 0;
+    bool mouseCaptured = false;
+    int lastMouseX = -1;
+    int lastMouseY = -1;
+
+    std::list<float> stats;
 public:
     void CreateBuffer(int pixelFormat);
     SWRenderer(HDC hdc, int w, int h);
@@ -31,4 +38,8 @@ public:
     void SwapBuffer();
     void Render(float timeElapsed);
     HBITMAP GetBitmap() const;
+    void SetHWND(HWND hwnd);
+    void MouseDown();
+    void MouseUp();
+    void MouseMove(int x, int y);
 };

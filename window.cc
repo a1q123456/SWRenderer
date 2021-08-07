@@ -1,6 +1,9 @@
 #include "window.h"
+#include <WinUser.h>
+#include <windowsx.h>
 #include "win32exception.h"
 #include <chrono>
+#include <Windows.h>
 
 LRESULT CALLBACK Window::WndProc(
     _In_ HWND hWnd,
@@ -8,7 +11,7 @@ LRESULT CALLBACK Window::WndProc(
     _In_ WPARAM wParam,
     _In_ LPARAM lParam)
 {
-    auto self = reinterpret_cast<Window *>(lParam);
+    auto self = reinterpret_cast<Window *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 
     PAINTSTRUCT ps;
     HDC hdc;
@@ -16,8 +19,32 @@ LRESULT CALLBACK Window::WndProc(
     switch (message)
     {
     case WM_PAINT:
+    {
         hdc = BeginPaint(hWnd, &ps);
         EndPaint(hWnd, &ps);
+    }
+    break;
+    case WM_LBUTTONDOWN:
+        if (self == nullptr)
+        {
+            break;
+        }
+        self->renderer->MouseDown();
+        break;
+    case WM_LBUTTONUP:
+        if (self == nullptr)
+        {
+            break;
+        }
+        self->renderer->MouseUp();
+        break;
+    case WM_MOUSEMOVE:
+        if (self == nullptr)
+        {
+            break;
+        }
+
+        self->renderer->MouseMove(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
         break;
     case WM_DESTROY:
         PostQuitMessage(0);
@@ -29,13 +56,39 @@ LRESULT CALLBACK Window::WndProc(
     return 0;
 }
 
+void Window::Render()
+{
+    renderer->SwapBuffer();
+    auto now = std::chrono::steady_clock::now();
+    auto dur = now - lastTime;
+    lastTime = now;
+    auto t = dur.count() / 1'000'000'000.0;
+    renderer->Render(t);
+    HDC src = CreateCompatibleDC(mHdc);       // hdc - Device context for window, I've got earlier with GetDC(hWnd) or GetDC(NULL);
+    SelectObject(src, renderer->GetBitmap()); // Inserting picture into our temp HDC
+    BitBlt(mHdc,                              // Destination
+           0,                                 // x and
+           0,                                 // y - upper-left corner of place, where we'd like to copy
+           width,                             // width of the region
+           height,                            // height
+           src,                               // source
+           0,                                 // x and
+           0,                                 // y of upper left corner  of part of the source, from where we'd like to copy
+           SRCCOPY);                          // Defined DWORD to juct copy pixels. Watch more on msdn;
+
+    DeleteDC(src); // Deleting temp HDC
+}
+
 Window::~Window()
 {
     stop = true;
     try
     {
         renderTh.join();
-    } catch (...) {}
+    }
+    catch (...)
+    {
+    }
 }
 
 Window::Window(
@@ -73,7 +126,8 @@ Window::Window(
         NULL,
         NULL,
         hInstance,
-        this);
+        nullptr);
+    SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)this);
     if (!hWnd)
     {
         throw std::system_error(GetLastError(), win32_error_category());
@@ -108,36 +162,36 @@ Window::Window(
                nShowCmd);
     UpdateWindow(hWnd);
     renderer = std::make_unique<SWRenderer>(mHdc, width, height);
+    renderer->SetHWND(hWnd);
     renderer->CreateBuffer(iPixelFormat);
 
-    renderTh = std::thread{[=]()
-                           {
-                               auto lastTime = std::chrono::steady_clock::now();
-                               while (!stop)
-                               {
-                                   renderer->SwapBuffer();
-                                   auto now = std::chrono::steady_clock::now();
-                                   auto dur = now - lastTime;
-                                   lastTime = now;
-                                   auto t = dur.count() / 1'000'000'000.0;
-                                   renderer->Render(t);
-                                   HDC src = CreateCompatibleDC(mHdc);      // hdc - Device context for window, I've got earlier with GetDC(hWnd) or GetDC(NULL);
-                                   SelectObject(src, renderer->GetBitmap()); // Inserting picture into our temp HDC
-                                   BitBlt(mHdc,                             // Destination
-                                          0,                                // x and
-                                          0,                                // y - upper-left corner of place, where we'd like to copy
-                                          width,                            // width of the region
-                                          height,                           // height
-                                          src,                              // source
-                                          0,                                // x and
-                                          0,                                // y of upper left corner  of part of the source, from where we'd like to copy
-                                          SRCCOPY);                         // Defined DWORD to juct copy pixels. Watch more on msdn;
+    // renderTh = std::thread{[=]()
+    //                        {
+    //                            auto lastTime = std::chrono::steady_clock::now();
+    //                            while (!stop)
+    //                            {
+    //                                renderer->SwapBuffer();
+    //                                auto now = std::chrono::steady_clock::now();
+    //                                auto dur = now - lastTime;
+    //                                lastTime = now;
+    //                                auto t = dur.count() / 1'000'000'000.0;
+    //                                renderer->Render(t);
+    //                                HDC src = CreateCompatibleDC(mHdc);      // hdc - Device context for window, I've got earlier with GetDC(hWnd) or GetDC(NULL);
+    //                                SelectObject(src, renderer->GetBitmap()); // Inserting picture into our temp HDC
+    //                                BitBlt(mHdc,                             // Destination
+    //                                       0,                                // x and
+    //                                       0,                                // y - upper-left corner of place, where we'd like to copy
+    //                                       width,                            // width of the region
+    //                                       height,                           // height
+    //                                       src,                              // source
+    //                                       0,                                // x and
+    //                                       0,                                // y of upper left corner  of part of the source, from where we'd like to copy
+    //                                       SRCCOPY);                         // Defined DWORD to juct copy pixels. Watch more on msdn;
 
-                                   DeleteDC(src); // Deleting temp HDC
-                               }
-                           }};
+    //                                DeleteDC(src); // Deleting temp HDC
+    //                            }
+    //                        }};
 }
-
 
 int Window::Width() const
 {
@@ -152,11 +206,23 @@ int Window::Height() const
 int Window::Exec()
 {
     MSG msg;
-    while (GetMessage(&msg, NULL, 0, 0))
+    while (true)
     {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
 
+        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+        {
+            if (msg.message == WM_QUIT)
+            {
+                break;
+            }
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+        if (msg.message == WM_QUIT)
+        {
+            break;
+        }
+        Render();
+    }
     return (int)msg.wParam;
 }

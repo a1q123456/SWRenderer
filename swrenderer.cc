@@ -1,17 +1,58 @@
 #include "swrenderer.h"
-#include <glm/mat4x4.hpp>
-#include <glm/vec4.hpp>
-#include <glm/vec3.hpp>
-#include <glm/common.hpp>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/euler_angles.hpp>
+
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <vector>
 #include <algorithm>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+#include "utils.h"
+#include <Windows.h>
+void SWRenderer::SetHWND(HWND hwnd)
+{
+    this->hwnd = hwnd;
+}
+void SWRenderer::MouseDown()
+{
+    if (hwnd != 0)
+    {
+        SetCapture(hwnd);
+    }
+    mouseCaptured = true;
+}
+
+void SWRenderer::MouseUp()
+{
+    if (hwnd != 0)
+    {
+        ReleaseCapture();
+    }
+    mouseCaptured = false;
+    lastMouseX = -1;
+    lastMouseY = -1;
+}
+
+void SWRenderer::MouseMove(int x, int y)
+{
+    if (!mouseCaptured)
+    {
+        return;
+    }
+    if (lastMouseX == -1)
+    {
+        lastMouseX = x;
+    }
+    if (lastMouseY == -1)
+    {
+        lastMouseY = y;
+    }
+    auto deltaX = x - lastMouseX;
+    auto deltaY = y - lastMouseY;
+    cubeRotation.y += (float)deltaX * 2.0 / (float)width;
+    cubeRotation.x += (float)deltaY * 2.0 / (float)height;
+    lastMouseX = x;
+    lastMouseY = y;
+}
 
 SWRenderer::SWRenderer(HDC hdc, int w, int h) : hdc(hdc), width(w), height(h)
 {
@@ -55,43 +96,45 @@ HBITMAP SWRenderer::GetBitmap() const
     return bitmaps[bufferIndex];
 }
 
+constexpr size_t nbElements = 9;
+
 // clang-format off
 float vertexList[] = {
     // front
-    0, 0, 0, 0, 0, 0,
-    0, 1, 0, 0, 1, 0,
-    1, 1, 0, 1, 1, 0,
-    1, 0, 0, 1, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, -1,
+    0, 1, 0, 0, 1, 0, 0, 0, -1,
+    1, 1, 0, 1, 1, 0, 0, 0, -1,
+    1, 0, 0, 1, 0, 0, 0, 0, -1,
 
     // left
-    0, 0, 1, 0, 0, 0,
-    0, 1, 1, 0, 1, 0,
-    0, 1, 0, 1, 1, 0,
-    0, 0, 0, 1, 0, 0,
+    0, 0, 1, 0, 0, 0, -1, 0, 0,
+    0, 1, 1, 0, 1, 0, -1, 0, 0,
+    0, 1, 0, 1, 1, 0, -1, 0, 0,
+    0, 0, 0, 1, 0, 0, -1, 0, 0,
 
     // back
-    1, 0, 1, 0, 0, 0,
-    1, 1, 1, 0, 1, 0,
-    0, 1, 1, 1, 1, 0,
-    0, 0, 1, 1, 0, 0,
+    1, 0, 1, 0, 0, 0, 0, 0, 1,
+    1, 1, 1, 0, 1, 0, 0, 0, 1,
+    0, 1, 1, 1, 1, 0, 0, 0, 1,
+    0, 0, 1, 1, 0, 0, 0, 0, 1,
 
     // right
-    1, 0, 0, 0, 0, 0,
-    1, 1, 0, 0, 1, 0,
-    1, 1, 1, 1, 1, 0,
-    1, 0, 1, 1, 0, 0,
+    1, 0, 0, 0, 0, 0, 1, 0, 0,
+    1, 1, 0, 0, 1, 0, 1, 0, 0,
+    1, 1, 1, 1, 1, 0, 1, 0, 0,
+    1, 0, 1, 1, 0, 0, 1, 0, 0,
 
     // bottom
-    1, 0, 0, 0, 0, 0,
-    1, 0, 1, 0, 1, 0,
-    0, 0, 1, 1, 1, 0,
-    0, 0, 0, 1, 0, 0,
+    1, 0, 0, 0, 0, 0, 0, -1, 0,
+    1, 0, 1, 0, 1, 0, 0, -1, 0,
+    0, 0, 1, 1, 1, 0, 0, -1, 0,
+    0, 0, 0, 1, 0, 0, 0, -1, 0,
 
     // top
-    0, 1, 0, 0, 0, 0,
-    0, 1, 1, 0, 1, 0,
-    1, 1, 1, 1, 1, 0,
-    1, 1, 0, 1, 0, 0,
+    0, 1, 0, 0, 0, 0, 0, 1, 0,
+    0, 1, 1, 0, 1, 0, 0, 1, 0,
+    1, 1, 1, 1, 1, 0, 0, 1, 0,
+    1, 1, 0, 1, 0, 0, 0, 1, 0,
     };
 
 // clang-format on
@@ -101,17 +144,6 @@ enum VertexElementType
     VET_UV,
     VET_NORMAL
 };
-
-enum DataType
-{
-    DT_FLOAT3 = sizeof(float) * 3,
-    DT_FLOAT2 = sizeof(float) * 2,
-    DT_FLOAT1 = sizeof(float) * 1
-};
-
-const int vertexLayout[]{
-    VET_POSITION, DT_FLOAT3,
-    VET_UV, DT_FLOAT3};
 
 int indexList[] = {
     // front
@@ -142,6 +174,8 @@ struct Triangle
 {
     glm::vec3 p0, p1, p2;
     glm::vec3 uv0, uv1, uv2;
+    glm::vec3 normal0, normal1, normal2;
+    glm::vec3 fragPos0, fragPos1, fragPos2;
 
     glm::vec3 min, max;
 
@@ -154,20 +188,32 @@ struct Triangle
         const glm::vec3 &c,
         const glm::vec3 &uv0,
         const glm::vec3 &uv1,
-        const glm::vec3 &uv2) : p0(a),
-                                p1(b),
-                                p2(c),
-                                uv0(uv0),
-                                uv1(uv1),
-                                uv2(uv2),
-                                min(glm::vec3{
-                                    std::min(std::min(a.x, b.x), c.x),
-                                    std::min(std::min(a.y, b.y), c.y),
-                                    std::min(std::min(a.z, b.z), c.z)}),
-                                max(glm::vec3{
-                                    std::max(std::max(a.x, b.x), c.x),
-                                    std::max(std::max(a.y, b.y), c.y),
-                                    std::max(std::max(a.z, b.z), c.z)})
+        const glm::vec3 &uv2,
+        const glm::vec3 &normal0,
+        const glm::vec3 &normal1,
+        const glm::vec3 &normal2,
+        const glm::vec3 &fragPos0,
+        const glm::vec3 &fragPos1,
+        const glm::vec3 &fragPos2) : p0(a),
+                                     p1(b),
+                                     p2(c),
+                                     uv0(uv0),
+                                     uv1(uv1),
+                                     uv2(uv2),
+                                     normal0(normal0),
+                                     normal1(normal1),
+                                     normal2(normal2),
+                                     fragPos0(fragPos0),
+                                     fragPos1(fragPos1),
+                                     fragPos2(fragPos2),
+                                     min(glm::vec3{
+                                         std::min(std::min(a.x, b.x), c.x),
+                                         std::min(std::min(a.y, b.y), c.y),
+                                         std::min(std::min(a.z, b.z), c.z)}),
+                                     max(glm::vec3{
+                                         std::max(std::max(a.x, b.x), c.x),
+                                         std::max(std::max(a.y, b.y), c.y),
+                                         std::max(std::max(a.z, b.z), c.z)})
 
     {
         auto avgTri = (a + b + c);
@@ -212,6 +258,12 @@ struct Triangle
 
 void SWRenderer::Render(float timeElapsed)
 {
+    stats.emplace_back(timeElapsed);
+    if (stats.size() > 5)
+    {
+        stats.pop_front();
+    }
+    auto avgTime = std::accumulate(std::begin(stats), std::end(stats), 0.f) / 5.0;
 
     float fov = 50;
     float aspectRatio = (float)width / (float)height;
@@ -221,38 +273,27 @@ void SWRenderer::Render(float timeElapsed)
     float canvasWidth = 1;
     float canvasHeight = 1;
 
-    static float x = 0;
-    static float y = 0;
-    static float z = 0;
-
-    x += timeElapsed * 0.5;
-    //y += timeElapsed * 0.1;
-    z += timeElapsed * 0.3;
-
-    glm::vec4 omniLight{10, 10, 10, 1};
+    glm::vec4 omniLight{0, 0, -10, 1};
     glm::vec3 lightColor{1, 1, 1};
-    float lightIntensity = 2.0;
-    float lightFadeFactor = 1500;
+    float lightIntensity = 1;
+    float lightFadeFactor = 18;
 
-    auto viewTransform = glm::lookAt(glm::vec3{0, 0, -7}, glm::vec3{0, 0, 0}, glm::vec3{0, 1, 0});
+    auto viewTransform = glm::inverse(glm::lookAt(glm::vec3{0, 0, -7}, glm::vec3{0, 0, 0}, glm::vec3{0, 1, 0}));
     auto projectionMatrix = glm::perspective(glm::radians(55.f), aspectRatio, zNear, zFar);
     auto scaleMatrix = glm::scale(glm::identity<glm::mat4>(), glm::vec3{1, 1, 1});
     auto translateOriginMatrix = glm::translate(glm::identity<glm::mat4>(), glm::vec3{-0.5, -0.5, -0.5});
     auto translateBackMatrix = glm::identity<glm::mat4>();
     auto translateMatrix = glm::translate(glm::identity<glm::mat4>(), glm::vec3{0, 0, 0});
-    auto rotationMatrix = glm::eulerAngleXYZ(x, y, z);
+    auto rotationMatrix = glm::eulerAngleXYZ(cubeRotation.x, cubeRotation.y, cubeRotation.z);
     auto modelTransform = translateMatrix * translateBackMatrix * rotationMatrix * scaleMatrix * translateOriginMatrix;
-    auto projWorld = projectionMatrix * glm::inverse(viewTransform) * modelTransform;
+    auto projVP = projectionMatrix * viewTransform;
+    constexpr int nbIndices = count_of(indexList);
 
-    constexpr int nbIndices = sizeof(indexList) / sizeof(indexList[0]);
-    constexpr int nbLayoutElement = sizeof(vertexLayout) / sizeof(vertexLayout[0]);
-    int szElement = 0;
-    for (int i = 0; i < 4; i += 2)
-    {
-        szElement += vertexLayout[(i + 1)];
-    }
-    szElement /= sizeof(float);
     std::vector<Triangle> triangleList;
+    triangleList.reserve(nbIndices / 3);
+
+    canvas[bufferIndex]->Clear(0);
+    ClearZBuffer();
 
     for (int i = 0; i < nbIndices; i += 3)
     {
@@ -264,35 +305,33 @@ void SWRenderer::Render(float timeElapsed)
         glm::vec3 uv1;
         glm::vec3 uv2;
 
-        int offset = 0;
-        for (int j = 0; j < nbLayoutElement; j += 2)
-        {
-            if (vertexLayout[j] == VET_POSITION)
-            {
-                v0 = glm::vec3{vertexList[indexList[i + 0] * szElement + offset], vertexList[indexList[i + 0] * szElement + 1 + offset], vertexList[indexList[i + 0] * szElement + 2 + offset]};
-                v1 = glm::vec3{vertexList[indexList[i + 1] * szElement + offset], vertexList[indexList[i + 1] * szElement + 1 + offset], vertexList[indexList[i + 1] * szElement + 2 + offset]};
-                v2 = glm::vec3{vertexList[indexList[i + 2] * szElement + offset], vertexList[indexList[i + 2] * szElement + 1 + offset], vertexList[indexList[i + 2] * szElement + 2 + offset]};
-                offset += vertexLayout[j + 1];
-            }
-            else if (vertexLayout[j] == VET_UV)
-            {
-                uv0 = glm::vec3{vertexList[indexList[i + 0] * szElement + offset], vertexList[indexList[i + 0] * szElement + 1 + offset], vertexList[indexList[i + 0] * szElement + 2 + offset]};
-                uv1 = glm::vec3{vertexList[indexList[i + 1] * szElement + offset], vertexList[indexList[i + 1] * szElement + 1 + offset], vertexList[indexList[i + 1] * szElement + 2 + offset]};
-                uv2 = glm::vec3{vertexList[indexList[i + 2] * szElement + offset], vertexList[indexList[i + 2] * szElement + 1 + offset], vertexList[indexList[i + 2] * szElement + 2 + offset]};
-            }
-        }
+        glm::vec3 normal0;
+        glm::vec3 normal1;
+        glm::vec3 normal2;
 
-        auto pv0 = projWorld * glm::vec4{v0, 1};
-        auto pv1 = projWorld * glm::vec4{v1, 1};
-        auto pv2 = projWorld * glm::vec4{v2, 1};
+        v0 = glm::vec3{vertexList[indexList[i + 0] * nbElements + 0], vertexList[indexList[i + 0] * nbElements + 1], vertexList[indexList[i + 0] * nbElements + 2]};
+        v1 = glm::vec3{vertexList[indexList[i + 1] * nbElements + 0], vertexList[indexList[i + 1] * nbElements + 1], vertexList[indexList[i + 1] * nbElements + 2]};
+        v2 = glm::vec3{vertexList[indexList[i + 2] * nbElements + 0], vertexList[indexList[i + 2] * nbElements + 1], vertexList[indexList[i + 2] * nbElements + 2]};
 
-        pv0 = projectionMatrix * pv0;
-        pv1 = projectionMatrix * pv1;
-        pv2 = projectionMatrix * pv2;
+        uv0 = glm::vec3{vertexList[indexList[i + 0] * nbElements + 3], vertexList[indexList[i + 0] * nbElements + 4], vertexList[indexList[i + 0] * nbElements + 5]};
+        uv1 = glm::vec3{vertexList[indexList[i + 1] * nbElements + 3], vertexList[indexList[i + 1] * nbElements + 4], vertexList[indexList[i + 1] * nbElements + 5]};
+        uv2 = glm::vec3{vertexList[indexList[i + 2] * nbElements + 3], vertexList[indexList[i + 2] * nbElements + 4], vertexList[indexList[i + 2] * nbElements + 5]};
 
-        auto ov0 = pv0;
-        auto ov1 = pv1;
-        auto ov2 = pv2;
+        normal0 = glm::vec3{vertexList[indexList[i + 0] * nbElements + 6], vertexList[indexList[i + 0] * nbElements + 7], vertexList[indexList[i + 0] * nbElements + 8]};
+        normal1 = glm::vec3{vertexList[indexList[i + 1] * nbElements + 6], vertexList[indexList[i + 1] * nbElements + 7], vertexList[indexList[i + 1] * nbElements + 8]};
+        normal2 = glm::vec3{vertexList[indexList[i + 2] * nbElements + 6], vertexList[indexList[i + 2] * nbElements + 7], vertexList[indexList[i + 2] * nbElements + 8]};
+
+        auto mv0 = modelTransform * glm::vec4{v0, 1};
+        auto mv1 = modelTransform * glm::vec4{v1, 1};
+        auto mv2 = modelTransform * glm::vec4{v2, 1};
+
+        auto mnormal0 = glm::transpose(glm::inverse(modelTransform)) * glm::vec4{normal0, 1};
+        auto mnormal1 = glm::transpose(glm::inverse(modelTransform)) * glm::vec4{normal1, 1};
+        auto mnormal2 = glm::transpose(glm::inverse(modelTransform)) * glm::vec4{normal2, 1};
+
+        auto pv0 = projVP * mv0;
+        auto pv1 = projVP * mv1;
+        auto pv2 = projVP * mv2;
 
         auto sv0 = glm::vec3{pv0 / pv0.z};
         auto sv1 = glm::vec3{pv1 / pv1.z};
@@ -313,9 +352,9 @@ void SWRenderer::Render(float timeElapsed)
         //     continue;
         // }
 
-        sv0 = glm::vec3{(sv0.x + canvasWidth / 2.f) / canvasWidth, (sv0.y + canvasHeight / 2.f) / canvasHeight, ov0.z};
-        sv1 = glm::vec3{(sv1.x + canvasWidth / 2.f) / canvasWidth, (sv1.y + canvasHeight / 2.f) / canvasHeight, ov1.z};
-        sv2 = glm::vec3{(sv2.x + canvasWidth / 2.f) / canvasWidth, (sv2.y + canvasHeight / 2.f) / canvasHeight, ov2.z};
+        sv0 = glm::vec3{(sv0.x + canvasWidth / 2.f) / canvasWidth, (sv0.y + canvasHeight / 2.f) / canvasHeight, pv0.z};
+        sv1 = glm::vec3{(sv1.x + canvasWidth / 2.f) / canvasWidth, (sv1.y + canvasHeight / 2.f) / canvasHeight, pv1.z};
+        sv2 = glm::vec3{(sv2.x + canvasWidth / 2.f) / canvasWidth, (sv2.y + canvasHeight / 2.f) / canvasHeight, pv2.z};
 
         glm::vec3 rv0{sv0.x * width, (1.0 - sv0.y) * height, -sv0.z};
         glm::vec3 rv1{sv1.x * width, (1.0 - sv1.y) * height, -sv1.z};
@@ -325,7 +364,7 @@ void SWRenderer::Render(float timeElapsed)
         uv1 /= rv1.z;
         uv2 /= rv2.z;
 
-        triangleList.emplace_back(rv0, rv1, rv2, uv0, uv1, uv2);
+        triangleList.emplace_back(rv0, rv1, rv2, uv0, uv1, uv2, mnormal0, mnormal1, mnormal2, mv0, mv1, mv2);
 
         // canvas[bufferIndex]->LineTo(std::round(rv0.x), std::round(rv0.y), std::round(rv1.x), std::round(rv1.y), 0xFFFFFFFF);
         // canvas[bufferIndex]->LineTo(std::round(rv1.x), std::round(rv1.y), std::round(rv2.x), std::round(rv2.y), 0xFFFFFFFF);
@@ -334,19 +373,14 @@ void SWRenderer::Render(float timeElapsed)
         // texturing
     }
 
-    omniLight = projectionMatrix * omniLight;
-    omniLight = glm::vec4{omniLight.x / omniLight.z, omniLight.y / omniLight.z, omniLight.z, 1};
-    omniLight = glm::vec4{(omniLight.x + canvasWidth / 2.f) / canvasWidth, (omniLight.y + canvasHeight / 2.f) / canvasHeight, omniLight.z, 1.0};
-    omniLight = glm::vec4{omniLight.x * width, (1.0 - omniLight.y) * height, -omniLight.z, 1.0};
-
-    canvas[bufferIndex]->Clear(0);
-    ClearZBuffer();
+    canvas[bufferIndex]->AddText(0, 0, 12, std::to_string(1.0 / avgTime), 0xFFFFFFFF);
 
     // for cache friendly
     std::sort(std::begin(triangleList), std::end(triangleList), [](const Triangle &a, const Triangle &b)
               { return a.avg < b.avg; });
     for (int y = 0; y < height; y++)
     {
+#pragma omp parallel for
         for (int x = 0; x < width; x++)
         {
             glm::vec3 pt{x, y, 0};
@@ -363,27 +397,37 @@ void SWRenderer::Render(float timeElapsed)
                     continue;
                 }
 
-                auto fragx = 1.0 / (1.0 / tri.p0.x * weight.x + 1.0 / tri.p1.x * weight.y + 1.0 / tri.p2.x * weight.z);
-                auto fragy = 1.0 / (1.0 / tri.p0.y * weight.x + 1.0 / tri.p1.y * weight.y + 1.0 / tri.p2.y * weight.z);
-                auto fragz = 1.0 / (1.0 / tri.p0.z * weight.x + 1.0 / tri.p1.z * weight.y + 1.0 / tri.p2.z * weight.z);
+                auto fragx = (tri.fragPos0.x * weight.x + tri.fragPos1.x * weight.y + tri.fragPos2.x * weight.z);
+                auto fragy = (tri.fragPos0.y * weight.x + tri.fragPos1.y * weight.y + tri.fragPos2.y * weight.z);
+                auto fragz = (tri.fragPos0.z * weight.x + tri.fragPos1.z * weight.y + tri.fragPos2.z * weight.z);
+
+                auto normalx = (tri.normal0.x * weight.x + tri.normal1.x * weight.y + tri.normal2.x * weight.z);
+                auto normaly = (tri.normal0.y * weight.x + tri.normal1.y * weight.y + tri.normal2.y * weight.z);
+                auto normalz = (tri.normal0.z * weight.x + tri.normal1.z * weight.y + tri.normal2.z * weight.z);
+
+                auto depth = 1.0 / (1.0 / tri.p0.z * weight.x + 1.0 / tri.p1.z * weight.y + 1.0 / tri.p2.z * weight.z);
 
                 glm::vec4 fragPos{fragx, fragy, fragz, 1};
+                glm::vec4 normal{normalx, normaly, normalz, 1};
 
-                if (depthTestEnabled && zBuffer[y * width + x] < fragz)
+                if (depthTestEnabled && zBuffer[y * width + x] < depth)
                 {
                     continue;
                 }
                 if (depthWriteEnabled)
                 {
-                    zBuffer[y * width + x] = fragz;
+                    zBuffer[y * width + x] = depth;
                 }
                 auto uvw = tri.uv0 * weight.x + tri.uv1 * weight.y + tri.uv2 * weight.z;
-                uvw *= fragz;
+                uvw *= depth;
                 uvw.x = 1.0 - uvw.x;
                 auto imgX = std::clamp((int)std::round(uvw.x * textureW), 0, textureW - 1);
                 auto imgY = std::clamp((int)std::round(uvw.y * textureH), 0, textureH - 1);
                 auto lightDistance = glm::distance(omniLight, fragPos);
                 auto lightValue = (1.0 - glm::clamp(lightDistance, 0.f, lightFadeFactor) / lightFadeFactor) * lightIntensity;
+
+                auto diffuse = std::clamp(glm::dot(glm::normalize(omniLight - fragPos), glm::normalize(normal)), 0.f, 1.f);
+                lightValue *= diffuse;
 
                 buffer[bufferIndex][y * width * 4 + x * 4 + 0] = std::clamp<std::uint8_t>(textureData[imgY * textureW * 4 + imgX * 4 + 2] * lightValue, 0, 255);
                 buffer[bufferIndex][y * width * 4 + x * 4 + 1] = std::clamp<std::uint8_t>(textureData[imgY * textureW * 4 + imgX * 4 + 1] * lightValue, 0, 255);
