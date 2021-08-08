@@ -107,11 +107,9 @@ public:
                 nameOffsetMap[i] = std::make_pair(std::string_view{d.name}, elementSize);
                 nameDescriptorMap[i] = std::make_pair(std::string_view{d.name}, d.type);
             }
-            else
-            {
-                offsetMap[i] = std::make_pair(d.attr, elementSize);
-                descriptorMap[i] = std::make_pair(d.attr, d.type);
-            }
+            offsetMap[i] = std::make_pair(d.attr, elementSize);
+            descriptorMap[i] = std::make_pair(d.attr, d.type);
+
             elementSize += (size_t)d.type;
         }
     }
@@ -147,6 +145,7 @@ public:
     template <typename T>
     T GetData(int index, VertexAttributes attr) const noexcept
     {
+        assert(attr != VertexAttributes::Custom);
         auto type = MapGet(descriptorMap, attr);
         auto start = elementSize * index + MapGet(offsetMap, attr);
         T ret;
@@ -172,6 +171,7 @@ public:
 
     float GetData(int index, int nItem, VertexAttributes attr) const noexcept
     {
+        assert(attr != VertexAttributes::Custom);
         auto type = MapGet(descriptorMap, attr);
         auto start = elementSize * index + MapGet(offsetMap, attr);
         return storage[start + nItem];
@@ -193,6 +193,7 @@ public:
 
     void SetData(int index, int nItem, VertexAttributes attr, float val)
     {
+        assert(attr != VertexAttributes::Custom);
         auto type = MapGet(descriptorMap, attr);
         auto start = elementSize * index + MapGet(offsetMap, attr);
         SetDataImpl(start, nItem, val);
@@ -215,6 +216,7 @@ public:
     template <typename T>
     void SetData(int index, VertexAttributes attr, T &&val)
     {
+        assert(attr != VertexAttributes::Custom);
         auto type = MapGet(descriptorMap, attr);
         auto start = elementSize * index + MapGet(offsetMap, attr);
         assert((size_t)type == 1);
@@ -224,6 +226,7 @@ public:
     template <typename... TRest>
     void SetData(int index, VertexAttributes attr, TRest &&...rest)
     {
+        assert(attr != VertexAttributes::Custom);
         auto type = MapGet(descriptorMap, attr);
         auto start = elementSize * index + MapGet(offsetMap, attr);
         assert((size_t)type == sizeof...(rest));

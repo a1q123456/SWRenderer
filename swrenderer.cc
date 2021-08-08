@@ -79,286 +79,11 @@ switch (d.type) \
 } \
 
 
-#define CRTEATE_O_VAR_DATA(ivec, idel, outctype, cattr, var) \
+#define LOAD_ATTR_IDX(cattr, outidx, ctype) \
 if (d.attr == cattr) \
 { \
-    switch (d.type) \
-    { \
-        CREATE_IO_DATA(ivec, idel, var, outctype, VertexAttributeTypes::Float, float, nullptr); \
-        CREATE_IO_DATA(ivec, idel, var, outctype, VertexAttributeTypes::Vec2, glm::vec2, nullptr); \
-        CREATE_IO_DATA(ivec, idel, var, outctype, VertexAttributeTypes::Vec3, glm::vec3, nullptr); \
-        CREATE_IO_DATA(ivec, idel, var, outctype, VertexAttributeTypes::Vec4, glm::vec4, nullptr); \
-    } \
-}
-
-#define LOAD_IO_VAR_DATA(i, ivec, cattr, var) \
-if (d.attr == cattr) \
-{ \
-    switch (d.type) \
-    { \
-        LOAD_MODEL_DATA_FLOAT(ivec, cattr, var, i, VertexAttributeTypes::Float, float, 1, 1, 1); \
-        LOAD_MODEL_DATA(ivec, cattr, var, i, VertexAttributeTypes::Vec2, glm::vec2, 1, 1); \
-        LOAD_MODEL_DATA(ivec, cattr, var, i, VertexAttributeTypes::Vec3, glm::vec3, 1); \
-        LOAD_MODEL_DATA(ivec, cattr, var, i, VertexAttributeTypes::Vec4, glm::vec4); \
-    } \
-}
-
-#define SET_OUTPUT_DATA(etype, ctype, idx, var, ...) \
-case etype: \
-    var = glm::vec4{*reinterpret_cast<ctype *>(vsOutput[idx]), __VA_ARGS__}; \
-    break;
-
-#define CALL_VERTEX_PROGRAM(idx) \
-ProgramDataPack vsInput##idx; \
-ProgramDataPack vsOutput##idx; \
-{ \
-    vsInput##idx.SetDataDescriptor(vsInputDesc); \
-    for (auto &&d : vsInputDesc) \
-    { \
-        for (int i = 0; i < (int)d.type; i++) \
-        { \
-            vsInput##idx.SetData(0, i, d.attr, modelData.GetVertexData(i + idx, i, d.attr)); \
-        } \
-    } \
-    vsOutput##idx = vertexEntry(&vertexProgram, vsInput##idx); \
-    for (int i = 0; i < (int)vsOutputPosType; i++) \
-    { \
-        v##idx[i] = vsOutput##idx.GetData(0, i, VertexAttributes::Position); \
-        if (vsOutputsUv) \
-        { \
-            uv##idx[i] = vsOutput##idx.GetData(0, i, VertexAttributes::TextureCoordinate); \
-        } \
-        if (vsOutputsColor) \
-        { \
-            color##idx[i] = vsOutput##idx.GetData(0, i, VertexAttributes::Color); \
-        } \
-    } \
-    v##idx.w = 1; \
-    uv##idx.w = 1; \
-}
-
-#define SET_PS_DATA(cattr, idx, var) \
-for (int i = 0; i < (int)vsOutputUvType; i++) \
-{ \
-    vsOutput##idx.SetData(0, i, cattr, var##idx[i]); \
-}
-
-#define SET_CONVERT_VS_TO_PS_FLOAT \
-case VertexAttributeTypes::Float: \
-{ \
-    auto outIdx = vsPsIndexMap[i]; \
-    auto outputDesc = vsOutputDesc[outIdx]; \
-    auto zVal = d.attr == VertexAttributes::TextureCoordinate ? depth : 1.0;\
-    switch (outputDesc.type) \
-    { \
-    case VertexAttributeTypes::Float: \
-    {\
-        auto val0 = *reinterpret_cast<float*>(tri.dataStorage0[outIdx]); \
-        auto val1 = *reinterpret_cast<float*>(tri.dataStorage1[outIdx]); \
-        auto val2 = *reinterpret_cast<float*>(tri.dataStorage2[outIdx]); \
-        *reinterpret_cast<float*>(psInput[i]) = zVal * float{ \
-            (val0 * weight.x + val1 * weight.y + val2 * weight.z)}; \
-    } \
-    break; \
-    case VertexAttributeTypes::Vec2: \
-    {\
-        auto val0 = reinterpret_cast<glm::vec2*>(tri.dataStorage0[outIdx])->x; \
-        auto val1 = reinterpret_cast<glm::vec2*>(tri.dataStorage1[outIdx])->x; \
-        auto val2 = reinterpret_cast<glm::vec2*>(tri.dataStorage2[outIdx])->x; \
-        *reinterpret_cast<float*>(psInput[i]) = zVal * float{ \
-            (val0 * weight.x + val1 * weight.y + val2 * weight.z)}; \
-    } \
-        break; \
-    case VertexAttributeTypes::Vec3: \
-    {\
-        auto val0 = reinterpret_cast<glm::vec3*>(tri.dataStorage0[outIdx])->x; \
-        auto val1 = reinterpret_cast<glm::vec3*>(tri.dataStorage1[outIdx])->x; \
-        auto val2 = reinterpret_cast<glm::vec3*>(tri.dataStorage2[outIdx])->x; \
-        *reinterpret_cast<float*>(psInput[i]) = zVal * float{ \
-            (val0 * weight.x + val1 * weight.y + val2 * weight.z)}; \
-    } \
-        break; \
-    case VertexAttributeTypes::Vec4: \
-    {\
-        auto val0 = reinterpret_cast<glm::vec4*>(tri.dataStorage0[outIdx])->x; \
-        auto val1 = reinterpret_cast<glm::vec4*>(tri.dataStorage1[outIdx])->x; \
-        auto val2 = reinterpret_cast<glm::vec4*>(tri.dataStorage2[outIdx])->x; \
-        *reinterpret_cast<float*>(psInput[i]) = zVal * float{ \
-            (val0 * weight.x + val1 * weight.y + val2 * weight.z)}; \
-    } \
-        break; \
-    } \
-}
-
-#define SET_CONVERT_VS_TO_PS_VEC2 \
-case VertexAttributeTypes::Vec2: \
-{ \
-    auto outIdx = vsPsIndexMap[i]; \
-    auto outputDesc = vsOutputDesc[outIdx]; \
-    auto zVal = d.attr == VertexAttributes::TextureCoordinate ? depth : 1.f;\
-    switch (outputDesc.type) \
-    { \
-    case VertexAttributeTypes::Float: \
-    {\
-        auto val0 = glm::vec2{*reinterpret_cast<float*>(tri.dataStorage0[outIdx])}; \
-        auto val1 = glm::vec2{*reinterpret_cast<float*>(tri.dataStorage1[outIdx])}; \
-        auto val2 = glm::vec2{*reinterpret_cast<float*>(tri.dataStorage2[outIdx])}; \
-        *reinterpret_cast<glm::vec2*>(psInput[i]) = glm::vec2{ \
-            (val0.x * weight.x + val1.x * weight.y + val2.x * weight.z), \
-            (val0.y * weight.x + val1.y * weight.y + val2.y * weight.z)} * zVal; \
-    } \
-    break; \
-    case VertexAttributeTypes::Vec2: \
-    {\
-        auto val0 = glm::vec2{*reinterpret_cast<glm::vec2*>(tri.dataStorage0[outIdx])}; \
-        auto val1 = glm::vec2{*reinterpret_cast<glm::vec2*>(tri.dataStorage1[outIdx])}; \
-        auto val2 = glm::vec2{*reinterpret_cast<glm::vec2*>(tri.dataStorage2[outIdx])}; \
-        *reinterpret_cast<glm::vec2*>(psInput[i]) = glm::vec2{ \
-            (val0.x * weight.x + val1.x * weight.y + val2.x * weight.z), \
-            (val0.y * weight.x + val1.y * weight.y + val2.y * weight.z)} * zVal; \
-    } \
-        break; \
-    case VertexAttributeTypes::Vec3: \
-    {\
-        auto val0 = glm::vec2{*reinterpret_cast<glm::vec3*>(tri.dataStorage0[outIdx])}; \
-        auto val1 = glm::vec2{*reinterpret_cast<glm::vec3*>(tri.dataStorage1[outIdx])}; \
-        auto val2 = glm::vec2{*reinterpret_cast<glm::vec3*>(tri.dataStorage2[outIdx])}; \
-        *reinterpret_cast<glm::vec2*>(psInput[i]) = glm::vec2{ \
-            (val0.x * weight.x + val1.x * weight.y + val2.x * weight.z), \
-            (val0.y * weight.x + val1.y * weight.y + val2.y * weight.z)} * zVal; \
-    } \
-        break; \
-    case VertexAttributeTypes::Vec4: \
-    {\
-        auto val0 = glm::vec2{*reinterpret_cast<glm::vec4*>(tri.dataStorage0[outIdx])}; \
-        auto val1 = glm::vec2{*reinterpret_cast<glm::vec4*>(tri.dataStorage1[outIdx])}; \
-        auto val2 = glm::vec2{*reinterpret_cast<glm::vec4*>(tri.dataStorage2[outIdx])}; \
-        *reinterpret_cast<glm::vec2*>(psInput[i]) = glm::vec2{ \
-            (val0.x * weight.x + val1.x * weight.y + val2.x * weight.z), \
-            (val0.y * weight.x + val1.y * weight.y + val2.y * weight.z)} * zVal; \
-    } \
-        break; \
-    } \
-}
-
-#define SET_CONVERT_VS_TO_PS_VEC3 \
-case VertexAttributeTypes::Vec3: \
-{ \
-    auto outIdx = vsPsIndexMap[i]; \
-    auto outputDesc = vsOutputDesc[outIdx]; \
-    auto zVal = d.attr == VertexAttributes::TextureCoordinate ? depth : 1.f;\
-    switch (outputDesc.type) \
-    { \
-    case VertexAttributeTypes::Float: \
-    {\
-        auto val0 = glm::vec3{*reinterpret_cast<float*>(tri.dataStorage0[outIdx])}; \
-        auto val1 = glm::vec3{*reinterpret_cast<float*>(tri.dataStorage1[outIdx])}; \
-        auto val2 = glm::vec3{*reinterpret_cast<float*>(tri.dataStorage2[outIdx])}; \
-        *reinterpret_cast<glm::vec3*>(psInput[i]) = glm::vec3{ \
-            (val0.x * weight.x + val1.x * weight.y + val2.x * weight.z),\
-            (val0.y * weight.x + val1.y * weight.y + val2.y * weight.z),\
-            (val0.z * weight.x + val1.z * weight.y + val2.z * weight.z),\
-            } * zVal; \
-    } \
-        break; \
-    case VertexAttributeTypes::Vec2: \
-    {\
-        auto val0 = glm::vec3{*reinterpret_cast<glm::vec2*>(tri.dataStorage0[outIdx]), 1}; \
-        auto val1 = glm::vec3{*reinterpret_cast<glm::vec2*>(tri.dataStorage1[outIdx]), 1}; \
-        auto val2 = glm::vec3{*reinterpret_cast<glm::vec2*>(tri.dataStorage2[outIdx]), 1}; \
-        *reinterpret_cast<glm::vec3*>(psInput[i]) = glm::vec3{ \
-            (val0.x * weight.x + val1.x * weight.y + val2.x * weight.z), \
-            (val0.y * weight.x + val1.y * weight.y + val2.y * weight.z), \
-            (val0.z * weight.x + val1.z * weight.y + val2.z * weight.z)} * zVal; \
-    } \
-        break; \
-    case VertexAttributeTypes::Vec3: \
-    {\
-        auto val0 = glm::vec3{*reinterpret_cast<glm::vec3*>(tri.dataStorage0[outIdx])}; \
-        auto val1 = glm::vec3{*reinterpret_cast<glm::vec3*>(tri.dataStorage1[outIdx])}; \
-        auto val2 = glm::vec3{*reinterpret_cast<glm::vec3*>(tri.dataStorage2[outIdx])}; \
-        *reinterpret_cast<glm::vec3*>(psInput[i]) = glm::vec3{ \
-            (val0.x * weight.x + val1.x * weight.y + val2.x * weight.z), \
-            (val0.y * weight.x + val1.y * weight.y + val2.y * weight.z), \
-            (val0.z * weight.x + val1.z * weight.y + val2.z * weight.z)} * zVal; \
-    } \
-        break; \
-    case VertexAttributeTypes::Vec4: \
-    {\
-        auto val0 = glm::vec3{*reinterpret_cast<glm::vec4*>(tri.dataStorage0[outIdx])}; \
-        auto val1 = glm::vec3{*reinterpret_cast<glm::vec4*>(tri.dataStorage1[outIdx])}; \
-        auto val2 = glm::vec3{*reinterpret_cast<glm::vec4*>(tri.dataStorage2[outIdx])}; \
-        *reinterpret_cast<glm::vec3*>(psInput[i]) = glm::vec3{ \
-            (val0.x * weight.x + val1.x * weight.y + val2.x * weight.z), \
-            (val0.y * weight.x + val1.y * weight.y + val2.y * weight.z), \
-            (val0.z * weight.x + val1.z * weight.y + val2.z * weight.z)} * zVal; \
-    } \
-        break; \
-    } \
-} \
-break;
-
-#define SET_CONVERT_VS_TO_PS_VEC4 \
-case VertexAttributeTypes::Vec4: \
-{ \
-    auto outIdx = vsPsIndexMap[i]; \
-    auto outputDesc = vsOutputDesc[outIdx]; \
-    auto zVal = (d.attr == VertexAttributes::TextureCoordinate || d.attr == VertexAttributes::Color) ? depth : 1.f;\
-    switch (outputDesc.type) \
-    { \
-    case VertexAttributeTypes::Float: \
-    {\
-        auto val0 = glm::vec4{*reinterpret_cast<float*>(tri.dataStorage0[outIdx])}; \
-        auto val1 = glm::vec4{*reinterpret_cast<float*>(tri.dataStorage1[outIdx])}; \
-        auto val2 = glm::vec4{*reinterpret_cast<float*>(tri.dataStorage2[outIdx])}; \
-        *reinterpret_cast<glm::vec4*>(psInput[i]) = glm::vec4{ \
-            (val0.x * weight.x + val1.x * weight.y + val2.x * weight.z),\
-            (val0.y * weight.x + val1.y * weight.y + val2.y * weight.z),\
-            (val0.z * weight.x + val1.z * weight.y + val2.z * weight.z),\
-            (val0.w * weight.x + val1.w * weight.y + val2.w * weight.z),\
-            } * zVal; \
-    } \
-        break; \
-    case VertexAttributeTypes::Vec2: \
-    {\
-        auto val0 = glm::vec4{*reinterpret_cast<glm::vec2*>(tri.dataStorage0[outIdx]), 1, 1}; \
-        auto val1 = glm::vec4{*reinterpret_cast<glm::vec2*>(tri.dataStorage1[outIdx]), 1, 1}; \
-        auto val2 = glm::vec4{*reinterpret_cast<glm::vec2*>(tri.dataStorage2[outIdx]), 1, 1}; \
-        *reinterpret_cast<glm::vec4*>(psInput[i]) = glm::vec4{ \
-            (val0.x * weight.x + val1.x * weight.y + val2.x * weight.z), \
-            (val0.y * weight.x + val1.y * weight.y + val2.y * weight.z), \
-            (val0.z * weight.x + val1.z * weight.y + val2.z * weight.z), \
-            (val0.w * weight.x + val1.w * weight.y + val2.w * weight.z), \
-            } * zVal; \
-    } \
-        break; \
-    case VertexAttributeTypes::Vec3: \
-    {\
-        auto val0 = glm::vec4{*reinterpret_cast<glm::vec3*>(tri.dataStorage0[outIdx]), 1}; \
-        auto val1 = glm::vec4{*reinterpret_cast<glm::vec3*>(tri.dataStorage1[outIdx]), 1}; \
-        auto val2 = glm::vec4{*reinterpret_cast<glm::vec3*>(tri.dataStorage2[outIdx]), 1}; \
-        *reinterpret_cast<glm::vec4*>(psInput[i]) = glm::vec4{ \
-            (val0.x * weight.x + val1.x * weight.y + val2.x * weight.z), \
-            (val0.y * weight.y + val1.y * weight.y + val2.y * weight.z), \
-            (val0.z * weight.z + val1.z * weight.y + val2.z * weight.z), \
-            (val0.w * weight.z + val1.w * weight.y + val2.w * weight.z), \
-            } * zVal; \
-    } \
-        break; \
-    case VertexAttributeTypes::Vec4: \
-    {\
-        auto val0 = glm::vec4{*reinterpret_cast<glm::vec4*>(tri.dataStorage0[outIdx])}; \
-        auto val1 = glm::vec4{*reinterpret_cast<glm::vec4*>(tri.dataStorage1[outIdx])}; \
-        auto val2 = glm::vec4{*reinterpret_cast<glm::vec4*>(tri.dataStorage2[outIdx])}; \
-        *reinterpret_cast<glm::vec4*>(psInput[i]) = glm::vec4{ \
-            (val0.x * weight.x + val1.x * weight.y + val2.x * weight.z), \
-            (val0.y * weight.y + val1.y * weight.y + val2.y * weight.z), \
-            (val0.z * weight.z + val1.z * weight.y + val2.z * weight.z), \
-            (val0.w * weight.z + val1.w * weight.y + val2.w * weight.z), \
-            } * zVal; \
-    } \
-        break; \
-    } \
+    outidx = i; \
+    ctype = d.type; \
 }
 
 // clang-format on
@@ -475,14 +200,6 @@ int indexList[] = {
     20, 21, 22,
     20, 22, 23};
 
-SWRenderer::~SWRenderer() noexcept
-{
-    for (int i = 0; i < vsInput.size(); i++)
-    {
-        vsInputDeleters[i](vsInput[i]);
-    }
-}
-
 SWRenderer::SWRenderer(HDC hdc, int w, int h) : hdc(hdc), width(w), height(h)
 {
     memDc = ::CreateCompatibleDC(hdc);
@@ -548,21 +265,12 @@ void SWRenderer::SetProgram()
     VertexAttributeTypes _vsType;
     int _vsIdx = 0;
 
-    for (auto &&d : vsInputDesc)
+    for (int i = 0; i < vsOutputDesc.size(); i++)
     {
-        CRTEATE_I_VAR_DATA(vsInput, vsInputDeleters, _vsType, VertexAttributes::Position, vsInputPosIdx)
-        CRTEATE_I_VAR_DATA(vsInput, vsInputDeleters, _vsType, VertexAttributes::TextureCoordinate, vsInputUvIdx)
-        CRTEATE_I_VAR_DATA(vsInput, vsInputDeleters, _vsType, VertexAttributes::Normal, vsInputNormalIdx)
-        CRTEATE_I_VAR_DATA(vsInput, vsInputDeleters, _vsType, VertexAttributes::Color, vsInputColorIdx)
-    }
-
-    for (auto &&d : vsOutputDesc)
-    {
-        CRTEATE_O_VAR_DATA(vsOutput, vsOutputDeleters, vsOutputPosType, VertexAttributes::Position, vsOutputPosIdx)
-        CRTEATE_O_VAR_DATA(vsOutput, vsOutputDeleters, vsOutputUvType, VertexAttributes::TextureCoordinate, vsOutputUvIdx)
-        CRTEATE_O_VAR_DATA(vsOutput, vsOutputDeleters, _vsType, VertexAttributes::Normal, _vsIdx)
-        CRTEATE_O_VAR_DATA(vsOutput, vsOutputDeleters, vsOutputColorType, VertexAttributes::Color, vsOutputColorIdx)
-        CRTEATE_O_VAR_DATA(vsOutput, vsOutputDeleters, _vsType, VertexAttributes::Custom, _vsIdx)
+        auto &&d = vsOutputDesc[i];
+        LOAD_ATTR_IDX(VertexAttributes::Position, vsOutputPosIdx, vsOutputPosType)
+        LOAD_ATTR_IDX(VertexAttributes::TextureCoordinate, vsOutputUvIdx, vsOutputUvType)
+        LOAD_ATTR_IDX(VertexAttributes::Color, vsOutputColorIdx, vsOutputColorType)
     }
 
     for (int src = 0; src < psInputDesc.size(); src++)
@@ -578,28 +286,12 @@ void SWRenderer::SetProgram()
         {
             iter = std::find_if(std::cbegin(vsOutputDesc), std::cend(vsOutputDesc), [d](auto &&vd)
                                 { return d.attr == vd.attr; });
-            if (d.attr == VertexAttributes::TextureCoordinate)
-            {
-                psInputUvIdx = src;
-            }
-            else if (d.attr == VertexAttributes::Color)
-            {
-                psInputColorIdx = src;
-            }
-            else if (d.attr == VertexAttributes::Normal)
-            {
-                psInputNormalIdx = src;
-            }
         }
         if (iter == std::cend(vsOutputDesc))
         {
             assert(false);
         }
-        vsPsIndexMap[src] = iter - std::cbegin(vsOutputDesc);
-    }
-    for (auto &&d : psInputDesc)
-    {
-        CRTEATE_PSI_VAR_DELETER(psInputDeleters)
+        psVsIndexMap[src] = iter - std::cbegin(vsOutputDesc);
     }
 
     pixelProgram.UseLights({&pointLight, &ambientLight});
@@ -650,17 +342,17 @@ struct Triangle
         const glm::vec3 &b,
         const glm::vec3 &c,
         ProgramDataPack vsOutput[3]) : p0(a),
-                                            p1(b),
-                                            p2(c),
-                                            isValid(true),
-                                            min(glm::vec3{
-                                                std::min(std::min(a.x, b.x), c.x),
-                                                std::min(std::min(a.y, b.y), c.y),
-                                                std::min(std::min(a.z, b.z), c.z)}),
-                                            max(glm::vec3{
-                                                std::max(std::max(a.x, b.x), c.x),
-                                                std::max(std::max(a.y, b.y), c.y),
-                                                std::max(std::max(a.z, b.z), c.z)})
+                                       p1(b),
+                                       p2(c),
+                                       isValid(true),
+                                       min(glm::vec3{
+                                           std::min(std::min(a.x, b.x), c.x),
+                                           std::min(std::min(a.y, b.y), c.y),
+                                           std::min(std::min(a.z, b.z), c.z)}),
+                                       max(glm::vec3{
+                                           std::max(std::max(a.x, b.x), c.x),
+                                           std::max(std::max(a.y, b.y), c.y),
+                                           std::max(std::max(a.z, b.z), c.z)})
 
     {
         for (int i = 0; i < 3; i++)
@@ -781,10 +473,16 @@ void SWRenderer::Render(float timeElapsed)
             for (int i = 0; i < (int)vsOutputPosType; i++)
             {
                 v[j][i] = vsOutput[j].GetData(0, i, vsOutputPosIdx);
+            }
+            for (int i = 0; i < (int)vsOutputUvType; i++)
+            {
                 if (vsOutputsUv)
                 {
                     uv[j][i] = vsOutput[j].GetData(0, i, vsOutputUvIdx);
                 }
+            }
+            for (int i = 0; i < (int)vsOutputColorType; i++)
+            {
                 if (vsOutputsColor)
                 {
                     color[j][i] = vsOutput[j].GetData(0, i, vsOutputColorIdx);
@@ -884,21 +582,16 @@ void SWRenderer::Render(float timeElapsed)
 
                 int _psIdx;
                 VertexAttributeTypes _psType;
-                for (auto &&d : psInputDesc)
+
+                for (int id = 0; id < psInputDesc.size(); id++)
                 {
+                    auto &&d = psInputDesc[id];
                     glm::vec4 tmpVal[3];
                     for (int j = 0; j < 3; j++)
                     {
                         for (int i = 0; i < (int)d.type; i++)
                         {
-                            if (d.attr == VertexAttributes::Custom)
-                            {
-                                tmpVal[j][i] = tri.vsOutput[j].GetData(0, i, d.name);
-                            }
-                            else
-                            {
-                                tmpVal[j][i] = tri.vsOutput[j].GetData(0, i, d.attr);
-                            }
+                            tmpVal[j][i] = tri.vsOutput[j].GetData(0, i, psVsIndexMap.at(id));
                         }
                     }
 
@@ -913,14 +606,7 @@ void SWRenderer::Render(float timeElapsed)
                     }
                     for (int i = 0; i < (int)d.type; i++)
                     {
-                        if (d.attr == VertexAttributes::Custom)
-                        {
-                            psInput.SetData(0, i, d.name, val[i]);
-                        }
-                        else
-                        {
-                            psInput.SetData(0, i, d.attr, val[i]);
-                        }
+                        psInput.SetData(0, i, id, val[i]);
                     }
                 }
 

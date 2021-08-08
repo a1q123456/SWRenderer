@@ -46,21 +46,10 @@ class SWRenderer
 
     std::list<float> stats;
 
-    std::vector<void *> vsInput;
-    std::vector<std::function<void(void *)>> vsInputDeleters;
-    std::vector<void *> vsOutput;
-    std::vector<std::function<void(void *)>> vsOutputDeleters;
-    std::vector<std::function<void(void *)>> psInputDeleters;
     int vsOutputPosIdx = 0;
     int vsOutputUvIdx = 0;
     int vsOutputColorIdx = 0;
-    int vsInputPosIdx = 0;
-    int vsInputUvIdx = 0;
-    int vsInputNormalIdx = 0;
-    int vsInputColorIdx = 0;
-    int psInputUvIdx = -1;
-    int psInputColorIdx = -1;
-    int psInputNormalIdx = -1;
+
     VertexAttributeTypes vsOutputPosType;
     VertexAttributeTypes vsOutputUvType;
     VertexAttributeTypes vsOutputColorType;
@@ -76,7 +65,7 @@ class SWRenderer
 
     bool vsOutputsUv = false;
     bool vsOutputsColor = false;
-    std::map<int, int> vsPsIndexMap;
+    std::map<int, int> psVsIndexMap;
 
     void SetProgram();
 
@@ -84,7 +73,6 @@ public:
     void CreateBuffer(int pixelFormat);
     SWRenderer(HDC hdc, int w, int h);
     SWRenderer(const SWRenderer &) = delete;
-    ~SWRenderer() noexcept;
     SWRenderer &operator=(const SWRenderer &) = delete;
     void SwapBuffer();
     void Render(float timeElapsed);
