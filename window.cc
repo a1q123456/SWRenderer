@@ -127,6 +127,11 @@ Window::Window(
         NULL,
         hInstance,
         nullptr);
+    // RECT clientRect;
+    // GetClientRect(hWnd, &clientRect);
+    // clientRect.right = clientRect.left + width;
+    // clientRect.bottom = clientRect.top + height;
+    // AdjustWindowRect(&clientRect, 0, FALSE);
     SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)this);
     if (!hWnd)
     {

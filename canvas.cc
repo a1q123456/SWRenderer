@@ -16,8 +16,8 @@ void Canvas::LineTo(int x0, int y0, int x1, int y1, std::uint32_t color)
     auto old = ::SelectObject(hdc, bitmap);
     HPEN hPen = CreatePen(PS_SOLID, 1, color & 0x00FFFFFF);
     auto oldPen = ::SelectObject(hdc, hPen);
-    ::MoveToEx(hdc, x0, height - y0, nullptr);
-    ::LineTo(hdc, x1, height - y1);
+    ::MoveToEx(hdc, x0, y0, nullptr);
+    ::LineTo(hdc, x1, y1);
     SelectObject(hdc, oldPen);
     SelectObject(hdc, old);
     DeleteObject(hPen);

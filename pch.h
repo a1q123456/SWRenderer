@@ -10,6 +10,13 @@
 #include <algorithm>
 #include <numeric>
 #include <list>
+#include <iterator>
+#include <utility>
+#include <unordered_map>
+#include <functional>
+#include <map>
+#include <array>
+#include <string_view>
 #include <glm/mat4x4.hpp>
 #include <glm/vec4.hpp>
 #include <glm/vec3.hpp>
