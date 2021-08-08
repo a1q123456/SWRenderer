@@ -757,7 +757,7 @@ void SWRenderer::Render(float timeElapsed)
     pixelProgram.SetViewPosition(cameraPos);
 
 #ifndef _DEBUG
-// #pragma omp parallel for
+#pragma omp parallel for
 #endif
     for (int i = 0; i < nbIndices; i += 3)
     {
@@ -837,11 +837,11 @@ void SWRenderer::Render(float timeElapsed)
         }
 
         triangleList[i / 3] = Triangle{rv[0], rv[1], rv[2], vsOutput};
-
+#ifdef _DEBUG
         // canvas[bufferIndex]->LineTo(std::round(rv[0].x), std::round(rv[0].y), std::round(rv[1].x), std::round(rv[1].y), 0xFFFFFFFF);
         // canvas[bufferIndex]->LineTo(std::round(rv[1].x), std::round(rv[1].y), std::round(rv[2].x), std::round(rv[2].y), 0xFFFFFFFF);
         // canvas[bufferIndex]->LineTo(std::round(rv[2].x), std::round(rv[2].y), std::round(rv[0].x), std::round(rv[0].y), 0xFFFFFFFF);
-
+#endif
         // texturing
     }
     triangleList.erase(std::remove_if(std::begin(triangleList), std::end(triangleList), [](const Triangle &t)
@@ -854,7 +854,7 @@ void SWRenderer::Render(float timeElapsed)
     canvas[bufferIndex]->AddText(0, 0, 12, std::to_string(1.0 / avgTime), 0xFFFFFFFF);
 
 #ifndef _DEBUG
-// #pragma omp barrier
+#pragma omp barrier
 #endif
     for (int y = 0; y < height; y++)
     {

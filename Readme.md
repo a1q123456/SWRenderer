@@ -9,8 +9,8 @@
 - [ ] Directional Light
 - [ ] Area Light
 - [x] Lambert Material
-- [ ] Phong Material
-- [ ] Blinn Material
+- [x] Phong Material
+- [x] Blinn Material
 - [ ] Normal map
 - [ ] OBJ+MTL Loader
 - [ ] Reflection

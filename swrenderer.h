@@ -8,6 +8,7 @@
 #include "shading/material/phong_material.h"
 #include "shading/light/point_light.h"
 #include "shading/light/ambient_light.h"
+#include "shading/material/blinn_material.h"
 
 class SWRenderer
 {
@@ -33,7 +34,7 @@ class SWRenderer
 
     ModelData modelData;
     SimpleVertexProgram vertexProgram;
-    PhongMaterial pixelProgram;
+    BlinnMaterial pixelProgram;
     PointLight pointLight;
     AmbientLight ambientLight;
 

@@ -11,6 +11,7 @@ add_executable(swengine WIN32
 "model/model_data.cc" 
 "shading/material/simple_vertex_program.cc"
 "shading/material/phong_material.cc"
+"shading/material/blinn_material.cc"
 "shading/light/point_light.cc"
 )
 
