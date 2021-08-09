@@ -25,35 +25,21 @@ class SWRenderer
     bool depthWriteEnabled = true;
     bool backFaceCulling = true;
 
-    std::shared_ptr<std::uint8_t[]> textureData;
-    int textureW = 0;
-    int textureH = 0;
-    int textureChannels = 0;
-
-    void ClearZBuffer();
+    glm::mat4 viewTransform;
+    glm::mat4 projectionMatrix;
 
     ModelData modelData;
-    SimpleVertexProgram vertexProgram;
-    BlinnMaterial pixelProgram;
-    PointLight pointLight;
-    AmbientLight ambientLight;
-
-    glm::vec3 cubeRotation = glm::vec3{0, 0, 0};
-    HWND hwnd = 0;
-    bool mouseCaptured = false;
-    int lastMouseX = -1;
-    int lastMouseY = -1;
+    VertexProgram* vertexProgram = nullptr;
+    PixelProgram* pixelProgram = nullptr;
 
     std::list<float> stats;
 
     int vsOutputPosIdx = 0;
     int vsOutputUvIdx = 0;
     int vsOutputColorIdx = 0;
-
     VertexAttributeTypes vsOutputPosType;
     VertexAttributeTypes vsOutputUvType;
     VertexAttributeTypes vsOutputColorType;
-
     std::vector<VertexDataDescriptor> vsInputDesc;
     std::vector<VertexDataDescriptor> vsOutputDesc;
     std::vector<VertexDataDescriptor> psInputDesc;
@@ -67,18 +53,26 @@ class SWRenderer
     bool vsOutputsColor = false;
     std::map<int, int> psVsIndexMap;
 
-    void SetProgram();
-
 public:
     void CreateBuffer(int pixelFormat);
     SWRenderer(HDC hdc, int w, int h);
     SWRenderer(const SWRenderer &) = delete;
     SWRenderer &operator=(const SWRenderer &) = delete;
     void SwapBuffer();
-    void Render(float timeElapsed);
     HBITMAP GetBitmap() const;
+
+    
+    void ClearZBuffer();
+    void ClearColorBuffer();
+    void SetProgram(VertexProgram& vp, PixelProgram& pp);
+    void SetMesh(ModelData mesh);
+    void SetViewMatrix(const glm::mat4& view);
+    void ProjectionMatrix(const glm::mat4& proj);
+
+    void Render(float timeElapsed);
     void SetHWND(HWND hwnd);
     void MouseDown();
     void MouseUp();
     void MouseMove(int x, int y);
+    void MouseWheel(int val);
 };

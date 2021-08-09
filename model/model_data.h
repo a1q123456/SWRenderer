@@ -9,6 +9,7 @@ private:
     ModelDataPack dataPack;
 
 public:
+    size_t GetNumberIndices() const noexcept { return indexData.size(); }
     void SetIndexList(const std::vector<int> &indexData) noexcept;
     void SetVertexList(const std::vector<float> &vertexData) noexcept;
     void SetVertexDescriptor(const std::vector<VertexDataDescriptor> &descriptors) noexcept;

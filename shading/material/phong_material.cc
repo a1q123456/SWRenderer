@@ -45,7 +45,7 @@ PixelFunction PhongMaterial::GetEntry() const noexcept
             auto cameraDir = glm::normalize(self->cameraPos - fragPos);
             auto reflectVec = glm::reflect(-lightDir, normalDir);
             auto specular = std::pow(std::clamp(glm::dot(reflectVec, cameraDir), 0.f, 1.f), self->shininess) * self->specularStrength;
-            lightValue += (diffuse + specular * color);
+            lightValue += (diffuse + (float)specular * color);
         }
         
         return outColor * lightValue;

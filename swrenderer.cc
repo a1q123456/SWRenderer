@@ -9,84 +9,12 @@
 #include <Windows.h>
 #include "data_pack.h"
 
-// clang-format off
-#define LOAD_MODEL_DATA(ivec, cattr, var, i, etype, ctype, ...)                                  \
-    case etype:                                                            \
-    {                                                                      \
-        modelData.GetVertexData(i, cattr, ivec[var]); \
-    }                                                                      \
-    break;
-
-#define LOAD_MODEL_DATA_FLOAT(ivec, cattr, var, i, etype, ctype, ...)                                  \
-    case etype:                                                            \
-    {                                                                      \
-        modelData.GetVertexData(i, cattr, ivec[var]); \
-    }                                                                      \
-    break;
-#define CREATE_IO_DATA(ivec, idel, var, outctype, etype, ctype, val) \
-        case etype:\
-            outctype = etype; \
-            var = ivec.size(); \
-            ivec.emplace_back(val); \
-            idel.emplace_back([](void *d) \
-                                       { delete (ctype *)d; }); \
-            break;
-
-#define CRTEATE_I_VAR_DATA(ivec, idel, outctype, cattr, var) \
-if (d.attr == cattr) \
-{ \
-    switch (d.type) \
-    { \
-        CREATE_IO_DATA(ivec, idel, var, outctype, VertexAttributeTypes::Float, float, new float{}); \
-        CREATE_IO_DATA(ivec, idel, var, outctype, VertexAttributeTypes::Vec2, glm::vec2, new glm::vec2{}); \
-        CREATE_IO_DATA(ivec, idel, var, outctype, VertexAttributeTypes::Vec3, glm::vec3, new glm::vec3{}); \
-        CREATE_IO_DATA(ivec, idel, var, outctype, VertexAttributeTypes::Vec4, glm::vec4, new glm::vec4{}); \
-    } \
-}
-
-#define CREATE_PSI_DATA(ivec, var, outctype, etype, ctype) \
-        case etype:\
-            outctype = etype; \
-            var = ivec.size(); \
-            ivec.emplace_back(new ctype{}); \
-            break;
-
-#define CREATE_PSI_DELETER(ivec, etype, ctype) \
-        case etype:\
-            ivec.emplace_back([](void *d) \
-                                       { delete (ctype *)d; }); \
-            break;
-
-#define CRTEATE_PSI_VAR_DATA(ivec, outctype, cattr, var) \
-if (d.attr == cattr) \
-{ \
-    switch (d.type) \
-    { \
-        CREATE_PSI_DATA(ivec, var, outctype, VertexAttributeTypes::Float, float); \
-        CREATE_PSI_DATA(ivec, var, outctype, VertexAttributeTypes::Vec2, glm::vec2); \
-        CREATE_PSI_DATA(ivec, var, outctype, VertexAttributeTypes::Vec3, glm::vec3); \
-        CREATE_PSI_DATA(ivec, var, outctype, VertexAttributeTypes::Vec4, glm::vec4); \
-    } \
-}
-
-#define CRTEATE_PSI_VAR_DELETER(ivec) \
-switch (d.type) \
-{ \
-    CREATE_PSI_DELETER(ivec, VertexAttributeTypes::Float, float); \
-    CREATE_PSI_DELETER(ivec, VertexAttributeTypes::Vec2, glm::vec2); \
-    CREATE_PSI_DELETER(ivec, VertexAttributeTypes::Vec3, glm::vec3); \
-    CREATE_PSI_DELETER(ivec, VertexAttributeTypes::Vec4, glm::vec4); \
-} \
-
-
 #define LOAD_ATTR_IDX(cattr, outidx, ctype) \
-if (d.attr == cattr) \
-{ \
-    outidx = i; \
-    ctype = d.type; \
-}
-
-// clang-format on
+    if (d.attr == cattr)                    \
+    {                                       \
+        outidx = i;                         \
+        ctype = d.type;                     \
+    }
 
 void SWRenderer::SetHWND(HWND hwnd)
 {
@@ -112,6 +40,11 @@ void SWRenderer::MouseUp()
     lastMouseY = -1;
 }
 
+void SWRenderer::MouseWheel(int val)
+{
+    cameraDistance += val / 100.f;
+}
+
 void SWRenderer::MouseMove(int x, int y)
 {
     if (!mouseCaptured)
@@ -130,6 +63,7 @@ void SWRenderer::MouseMove(int x, int y)
     auto deltaY = y - lastMouseY;
     cubeRotation.x -= (float)deltaX * 2.0 / (float)width;
     cubeRotation.y -= (float)deltaY * 2.0 / (float)height;
+    cubeRotation.y = std::clamp(cubeRotation.y, -89.99f, 89.99f);
     lastMouseX = x;
     lastMouseY = y;
 }
@@ -204,17 +138,22 @@ SWRenderer::SWRenderer(HDC hdc, int w, int h) : hdc(hdc), width(w), height(h)
 {
     memDc = ::CreateCompatibleDC(hdc);
 
-    textureData.reset(stbi_load("C:\\Users\\jack\\Pictures\\surrealism_boat_clouds_130292_3000x3000.jpg", &textureW, &textureH, &textureChannels, STBI_rgb_alpha), stbi_image_free);
+    // textureData.reset(stbi_load("D:\\Desktop\\a.png", &textureW, &textureH, &textureChannels, STBI_rgb_alpha), stbi_image_free);
 
-    modelData.SetIndexList({std::cbegin(indexList), std::cend(indexList)});
-    modelData.SetVertexList({std::cbegin(vertexList), std::cend(vertexList)});
+    // modelData.SetIndexList({std::cbegin(indexList), std::cend(indexList)});
+    // modelData.SetVertexList({std::cbegin(vertexList), std::cend(vertexList)});
 
-    modelData.SetVertexDescriptor({
-        {VertexAttributes::Position, VertexAttributeTypes::Vec3},
-        {VertexAttributes::TextureCoordinate, VertexAttributeTypes::Vec3},
-        {VertexAttributes::Normal, VertexAttributeTypes::Vec3},
-    });
-    SetProgram();
+    // modelData.SetVertexDescriptor({
+    //     {VertexAttributes::Position, VertexAttributeTypes::Vec3},
+    //     {VertexAttributes::TextureCoordinate, VertexAttributeTypes::Vec3},
+    //     {VertexAttributes::Normal, VertexAttributeTypes::Vec3},
+    // });
+    // SetProgram();
+}
+
+void SWRenderer::learColorBuffer()
+{
+    canvas[bufferIndex]->Clear(0)
 }
 
 void SWRenderer::ClearZBuffer()
@@ -223,79 +162,6 @@ void SWRenderer::ClearZBuffer()
     {
         zBuffer[i] = std::numeric_limits<float>::infinity();
     }
-}
-
-void SWRenderer::SetProgram()
-{
-    vsInputDesc = vertexProgram.GetInput();
-    vsOutputDesc = vertexProgram.GetOutput();
-    psInputDesc = pixelProgram.GetInput();
-
-    vertexAttributes = modelData.GetAttributeMask();
-    inputVertexAttributes = getVertexAttributeMask(vsInputDesc);
-    vertexEntry = vertexProgram.GetEntry();
-    pixelEntry = pixelProgram.GetEntry();
-
-    for (auto d : vsInputDesc)
-    {
-        auto flag = ((std::uint32_t)d.attr);
-        if ((flag & vertexAttributes) == 0)
-        {
-            assert(false);
-        }
-    }
-
-    for (auto d : psInputDesc)
-    {
-        auto flag = ((std::uint32_t)d.attr);
-        if (flag != 0 && (flag & vertexAttributes) == 0)
-        {
-            assert(false);
-        }
-    }
-    auto vsOutputMask = getVertexAttributeMask(vsOutputDesc);
-    if (vsOutputMask & ((std::uint32_t)(VertexAttributes::Position)) == 0)
-    {
-        assert(false);
-    }
-
-    vsOutputsUv = (vsOutputMask & ((std::uint32_t)(VertexAttributes::TextureCoordinate))) != 0;
-    vsOutputsColor = (vsOutputMask & ((std::uint32_t)(VertexAttributes::Color))) != 0;
-
-    VertexAttributeTypes _vsType;
-    int _vsIdx = 0;
-
-    for (int i = 0; i < vsOutputDesc.size(); i++)
-    {
-        auto &&d = vsOutputDesc[i];
-        LOAD_ATTR_IDX(VertexAttributes::Position, vsOutputPosIdx, vsOutputPosType)
-        LOAD_ATTR_IDX(VertexAttributes::TextureCoordinate, vsOutputUvIdx, vsOutputUvType)
-        LOAD_ATTR_IDX(VertexAttributes::Color, vsOutputColorIdx, vsOutputColorType)
-    }
-
-    for (int src = 0; src < psInputDesc.size(); src++)
-    {
-        auto &&d = psInputDesc[src];
-        std::vector<VertexDataDescriptor>::const_iterator iter;
-        if (d.attr == VertexAttributes::Custom)
-        {
-            iter = std::find_if(std::cbegin(vsOutputDesc), std::cend(vsOutputDesc), [d](auto &&vd)
-                                { return vd.name && strcmp(d.name, vd.name) == 0; });
-        }
-        else
-        {
-            iter = std::find_if(std::cbegin(vsOutputDesc), std::cend(vsOutputDesc), [d](auto &&vd)
-                                { return d.attr == vd.attr; });
-        }
-        if (iter == std::cend(vsOutputDesc))
-        {
-            assert(false);
-        }
-        psVsIndexMap[src] = iter - std::cbegin(vsOutputDesc);
-    }
-
-    pixelProgram.UseLights({&pointLight, &ambientLight});
-    pixelProgram.SetDiffuseMap(textureData.get(), textureH, textureW);
 }
 
 void SWRenderer::CreateBuffer(int pixelFormat)
@@ -399,6 +265,98 @@ struct Triangle
     }
 };
 
+void SWRenderer::SetProgram(VertexProgram &vp, PixelProgram &pp)
+{
+    this->vertexProgram = &vp;
+    this->pixelProgram = &pp;
+
+    vsInputDesc = vertexProgram->GetInput();
+    vsOutputDesc = vertexProgram->GetOutput();
+    psInputDesc = pixelProgram->GetInput();
+
+    vertexAttributes = modelData.GetAttributeMask();
+    inputVertexAttributes = getVertexAttributeMask(vsInputDesc);
+    vertexEntry = vertexProgram->GetEntry();
+    pixelEntry = pixelProgram->GetEntry();
+
+    for (auto d : vsInputDesc)
+    {
+        auto flag = ((std::uint32_t)d.attr);
+        if ((flag & vertexAttributes) == 0)
+        {
+            assert(false);
+        }
+    }
+
+    for (auto d : psInputDesc)
+    {
+        auto flag = ((std::uint32_t)d.attr);
+        if (flag != 0 && (flag & vertexAttributes) == 0)
+        {
+            assert(false);
+        }
+    }
+    auto vsOutputMask = getVertexAttributeMask(vsOutputDesc);
+    if (vsOutputMask & ((std::uint32_t)(VertexAttributes::Position)) == 0)
+    {
+        assert(false);
+    }
+
+    vsOutputsUv = (vsOutputMask & ((std::uint32_t)(VertexAttributes::TextureCoordinate))) != 0;
+    vsOutputsColor = (vsOutputMask & ((std::uint32_t)(VertexAttributes::Color))) != 0;
+
+    VertexAttributeTypes _vsType;
+    int _vsIdx = 0;
+
+    for (int i = 0; i < vsOutputDesc.size(); i++)
+    {
+        auto &&d = vsOutputDesc[i];
+        LOAD_ATTR_IDX(VertexAttributes::Position, vsOutputPosIdx, vsOutputPosType)
+        LOAD_ATTR_IDX(VertexAttributes::TextureCoordinate, vsOutputUvIdx, vsOutputUvType)
+        LOAD_ATTR_IDX(VertexAttributes::Color, vsOutputColorIdx, vsOutputColorType)
+    }
+
+    for (int src = 0; src < psInputDesc.size(); src++)
+    {
+        auto &&d = psInputDesc[src];
+        std::vector<VertexDataDescriptor>::const_iterator iter;
+        if (d.attr == VertexAttributes::Custom)
+        {
+            iter = std::find_if(std::cbegin(vsOutputDesc), std::cend(vsOutputDesc), [d](auto &&vd)
+                                { return vd.name && strcmp(d.name, vd.name) == 0; });
+        }
+        else
+        {
+            iter = std::find_if(std::cbegin(vsOutputDesc), std::cend(vsOutputDesc), [d](auto &&vd)
+                                { return d.attr == vd.attr; });
+        }
+        if (iter == std::cend(vsOutputDesc))
+        {
+            assert(false);
+        }
+        psVsIndexMap[src] = iter - std::cbegin(vsOutputDesc);
+    }
+
+    // pixelProgram.UseLights({&pointLight, &ambientLight});
+    // pixelProgram.SetDiffuseMap(textureData.get(), textureH, textureW);
+}
+
+void SWRenderer::SetMesh(ModelData mesh)
+{
+    modelData = std::move(mesh);
+
+}
+
+void SWRenderer::SetViewMatrix(const glm::mat4 &view)
+{
+    viewTransform = view;
+}
+
+void SWRenderer::ProjectionMatrix(const glm::mat4 &proj)
+{
+    projectionMatrix = proj;
+}
+
 void SWRenderer::Render(float timeElapsed)
 {
     stats.emplace_back(timeElapsed);
@@ -408,45 +366,14 @@ void SWRenderer::Render(float timeElapsed)
     }
     auto avgTime = std::accumulate(std::begin(stats), std::end(stats), 0.f) / 5.0;
 
-    float fov = 50;
-    float aspectRatio = (float)width / (float)height;
-    float zNear = 0.01;
-    float zFar = 1000;
-
     float canvasWidth = 1;
     float canvasHeight = 1;
 
-    glm::vec3 cameraPos{0, 0, 7};
-    cameraPos = glm::eulerAngleYXZ(cubeRotation.x, cubeRotation.y, cubeRotation.z) * glm::vec4{cameraPos, 1};
-    glm::vec3 omniLight{10, 10, 10};
-    glm::vec3 lightColor{1, 1, 1};
-
-    float lightIntensity = 0.3;
-    float lightFadeFactor = 1000;
-
-    int shininess = 32;
-    float specularStrength = 1.0;
-
-    auto viewTransform = (glm::lookAt(cameraPos, glm::vec3{0, 0, 0}, glm::vec3{0, 1, 0}));
-    auto projectionMatrix = glm::perspective(glm::radians(55.f), aspectRatio, zNear, zFar);
-    auto scaleMatrix = glm::scale(glm::identity<glm::mat4>(), glm::vec3{1, 1, 1});
-    auto translateOriginMatrix = glm::translate(glm::identity<glm::mat4>(), glm::vec3{-0.5, -0.5, -0.5});
-    auto translateBackMatrix = glm::identity<glm::mat4>();
-    auto translateMatrix = glm::translate(glm::identity<glm::mat4>(), glm::vec3{0, 0, 0});
-    auto rotationMatrix = glm::eulerAngleXYZ(0.f, 0.f, 0.f);
-    auto modelTransform = translateMatrix * translateBackMatrix * rotationMatrix * scaleMatrix * translateOriginMatrix;
     auto projVP = projectionMatrix * viewTransform;
-    constexpr int nbIndices = count_of(indexList);
+    int nbIndices = modelData.GetNumberIndices();
 
     std::vector<Triangle> triangleList;
     triangleList.resize(nbIndices / 3);
-
-    canvas[bufferIndex]->Clear(0);
-    ClearZBuffer();
-
-    vertexProgram.SetModelMatrix(modelTransform);
-    vertexProgram.SetViewProjectMatrix(projVP);
-    pixelProgram.SetViewPosition(cameraPos);
 
 #ifndef _DEBUG
 #pragma omp parallel for
@@ -469,7 +396,7 @@ void SWRenderer::Render(float timeElapsed)
                     vsInput[j].SetData(0, k, d.attr, modelData.GetVertexData(i + j, k, d.attr));
                 }
             }
-            vsOutput[j] = vertexEntry(&vertexProgram, vsInput[j]);
+            vsOutput[j] = vertexEntry(vertexProgram, vsInput[j]);
             for (int i = 0; i < (int)vsOutputPosType; i++)
             {
                 v[j][i] = vsOutput[j].GetData(0, i, vsOutputPosIdx);
@@ -540,7 +467,6 @@ void SWRenderer::Render(float timeElapsed)
         // canvas[bufferIndex]->LineTo(std::round(rv[1].x), std::round(rv[1].y), std::round(rv[2].x), std::round(rv[2].y), 0xFFFFFFFF);
         // canvas[bufferIndex]->LineTo(std::round(rv[2].x), std::round(rv[2].y), std::round(rv[0].x), std::round(rv[0].y), 0xFFFFFFFF);
 #endif
-        // texturing
     }
     triangleList.erase(std::remove_if(std::begin(triangleList), std::end(triangleList), [](const Triangle &t)
                                       { return !t.isValid; }),
@@ -610,7 +536,7 @@ void SWRenderer::Render(float timeElapsed)
                     }
                 }
 
-                auto finalColor = pixelEntry(&pixelProgram, psInput);
+                auto finalColor = pixelEntry(pixelProgram, psInput);
 
                 if (depthTestEnabled && zBuffer[y * width + x] < depth)
                 {

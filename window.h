@@ -1,6 +1,8 @@
 #pragma once
 #include "tstring.h"
 #include "swrenderer.h"
+#include "scene_controller.h"
+
 
 class Window
 {

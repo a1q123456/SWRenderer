@@ -15,7 +15,7 @@ PixelFunction BlinnMaterial::GetEntry() const noexcept
         auto uvw = args.GetData<glm::vec3>(0, VertexAttributes::TextureCoordinate);
         auto normal = args.GetData<glm::vec3>(0, VertexAttributes::Normal);
         auto fragPos = args.GetData<glm::vec3>(0, "fragPos");
-
+        
         auto imgX = std::clamp((int)std::round(uvw.x * self->textureW), 0, self->textureW - 1);
         auto imgY = std::clamp((int)std::round(uvw.y * self->textureH), 0, self->textureH - 1) + 1;
         glm::vec4 outColor{
@@ -23,7 +23,7 @@ PixelFunction BlinnMaterial::GetEntry() const noexcept
             self->textureData[(self->textureH - imgY) * self->textureW * 4 + imgX * 4 + 1] / 255.0,
             self->textureData[(self->textureH - imgY) * self->textureW * 4 + imgX * 4 + 0] / 255.0,
             1.0};
-
+        return outColor;
         glm::vec4 fragPos4{fragPos, 1.0};
         glm::vec4 lightValue{0.0};
         for (auto &&light : self->lightEntry)
@@ -44,7 +44,7 @@ PixelFunction BlinnMaterial::GetEntry() const noexcept
             auto cameraDir = glm::normalize(self->cameraPos - fragPos);
             auto halfwayDir = glm::normalize(lightDir + cameraDir);
             auto specular = std::pow(std::clamp(glm::dot(normalDir, halfwayDir), 0.f, 1.f), self->shininess) * self->specularStrength;
-            lightValue += (diffuse + specular * color);
+            lightValue += (diffuse + (float)specular * color);
         }
 
         return outColor * lightValue;

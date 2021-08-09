@@ -236,8 +236,8 @@ public:
     template <typename T>
     void SetData(int index, std::string_view name, T &&val)
     {
-        auto type = MapGet(descriptorMap, attr);
-        auto start = elementSize * index + MapGet(offsetMap, attr);
+        auto type = MapGet(nameDescriptorMap, name);
+        auto start = elementSize * index + MapGet(nameOffsetMap, name);
         assert((size_t)type == 1);
         SetDataImpl(start, 0, std::forward<T>(val));
     }

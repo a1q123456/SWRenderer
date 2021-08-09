@@ -43,8 +43,14 @@ LRESULT CALLBACK Window::WndProc(
         {
             break;
         }
-
         self->renderer->MouseMove(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+        break;
+    case WM_MOUSEWHEEL:
+        if (self == nullptr)
+        {
+            break;
+        }
+        self->renderer->MouseWheel(GET_WHEEL_DELTA_WPARAM(wParam));
         break;
     case WM_DESTROY:
         PostQuitMessage(0);
