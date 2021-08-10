@@ -29,28 +29,28 @@ LRESULT CALLBACK Window::WndProc(
         {
             break;
         }
-        self->renderer->MouseDown();
+        self->scene->MouseDown();
         break;
     case WM_LBUTTONUP:
         if (self == nullptr)
         {
             break;
         }
-        self->renderer->MouseUp();
+        self->scene->MouseUp();
         break;
     case WM_MOUSEMOVE:
         if (self == nullptr)
         {
             break;
         }
-        self->renderer->MouseMove(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+        self->scene->MouseMove(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
         break;
     case WM_MOUSEWHEEL:
         if (self == nullptr)
         {
             break;
         }
-        self->renderer->MouseWheel(GET_WHEEL_DELTA_WPARAM(wParam));
+        self->scene->MouseWheel(GET_WHEEL_DELTA_WPARAM(wParam));
         break;
     case WM_DESTROY:
         PostQuitMessage(0);
@@ -64,14 +64,14 @@ LRESULT CALLBACK Window::WndProc(
 
 void Window::Render()
 {
-    renderer->SwapBuffer();
+    scene->SwapBuffer();
     auto now = std::chrono::steady_clock::now();
     auto dur = now - lastTime;
     lastTime = now;
     auto t = dur.count() / 1'000'000'000.0;
-    renderer->Render(t);
+    scene->Render(t);
     HDC src = CreateCompatibleDC(mHdc);       // hdc - Device context for window, I've got earlier with GetDC(hWnd) or GetDC(NULL);
-    SelectObject(src, renderer->GetBitmap()); // Inserting picture into our temp HDC
+    SelectObject(src, scene->GetBitmap()); // Inserting picture into our temp HDC
     BitBlt(mHdc,                              // Destination
            0,                                 // x and
            0,                                 // y - upper-left corner of place, where we'd like to copy
@@ -172,23 +172,23 @@ Window::Window(
     ShowWindow(hWnd,
                nShowCmd);
     UpdateWindow(hWnd);
-    renderer = std::make_unique<SWRenderer>(mHdc, width, height);
-    renderer->SetHWND(hWnd);
-    renderer->CreateBuffer(iPixelFormat);
+    scene = std::make_unique<SceneController>(mHdc, width, height);
+    scene->SetHWND(hWnd);
+    scene->CreateBuffer(iPixelFormat);
 
     // renderTh = std::thread{[=]()
     //                        {
     //                            auto lastTime = std::chrono::steady_clock::now();
     //                            while (!stop)
     //                            {
-    //                                renderer->SwapBuffer();
+    //                                scene->SwapBuffer();
     //                                auto now = std::chrono::steady_clock::now();
     //                                auto dur = now - lastTime;
     //                                lastTime = now;
     //                                auto t = dur.count() / 1'000'000'000.0;
-    //                                renderer->Render(t);
+    //                                scene->Render(t);
     //                                HDC src = CreateCompatibleDC(mHdc);      // hdc - Device context for window, I've got earlier with GetDC(hWnd) or GetDC(NULL);
-    //                                SelectObject(src, renderer->GetBitmap()); // Inserting picture into our temp HDC
+    //                                SelectObject(src, scene->GetBitmap()); // Inserting picture into our temp HDC
     //                                BitBlt(mHdc,                             // Destination
     //                                       0,                                // x and
     //                                       0,                                // y - upper-left corner of place, where we'd like to copy

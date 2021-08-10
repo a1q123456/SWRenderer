@@ -2,7 +2,6 @@
 #include "swrenderer.h"
 #include "shading/material/simple_vertex_program.h"
 #include "shading/material/blinn_material.h"
-#include "model/model_object.h"
 
 class SceneController
 {
@@ -22,40 +21,28 @@ class SceneController
     int lastMouseX = -1;
     int lastMouseY = -1;
 
+    glm::mat4 projectionMatrix;
     SWRenderer renderer;
-    std::vector<ModelObject> sceneObjects;
+    BlinnMaterial pixelProgram;
+    SimpleVertexProgram vertexProgram;
+    ModelData modelData;
+    ProgramContext programCtx;
 
 public:
-    SceneController()
-    {
-        float fov = 50;
-        float aspectRatio = (float)width / (float)height;
-        float zNear = 0.01;
-        float zFar = 1000;
+    SceneController(HDC hdc, int w, int h);
+    
+    void CreateBuffer(int pixelFormat) { renderer.CreateBuffer(pixelFormat); }
+    void SwapBuffer() { renderer.SwapBuffer(); }
+    HBITMAP GetBitmap() const { return renderer.GetBitmap(); }
+    void SetHWND(HWND hwnd);
 
-        auto projectionMatrix = glm::perspective(glm::radians(55.f), aspectRatio, zNear, zFar);
-        renderer.ProjectionMatrix(projectionMatrix);
-    }
+    void MouseDown();
 
-    void Render(float timeElapsed)
-    {
-        glm::vec3 cameraPos{0, 0, cameraDistance};
-        cameraPos = glm::eulerAngleYXZ(cubeRotation.x, cubeRotation.y, cubeRotation.z) * glm::vec4{cameraPos, 1};
+    void MouseUp();
 
-        auto viewTransform = (glm::lookAt(cameraPos, glm::vec3{0, 0, 0}, glm::vec3{0, 1, 0}));
-        auto scaleMatrix = glm::scale(glm::identity<glm::mat4>(), glm::vec3{1, 1, 1});
-        auto translateOriginMatrix = glm::translate(glm::identity<glm::mat4>(), glm::vec3{-0.5, -0.5, -0.5});
-        auto translateBackMatrix = glm::identity<glm::mat4>();
-        auto translateMatrix = glm::translate(glm::identity<glm::mat4>(), glm::vec3{0, 0, 0});
-        auto rotationMatrix = glm::eulerAngleXYZ(0.f, 0.f, 0.f);
-        auto modelTransform = translateMatrix * translateBackMatrix * rotationMatrix * scaleMatrix * translateOriginMatrix;
+    void MouseWheel(int val);
 
-        renderer.ClearColorBuffer(0);
-        renderer.ClearZBuffer();
+    void MouseMove(int x, int y);
 
-        vertexProgram.SetModelMatrix(modelTransform);
-        vertexProgram.SetViewProjectMatrix(projVP);
-        pixelProgram.SetViewPosition(cameraPos);
-
-    }
+    void Render(float timeElapsed);
 };

@@ -3,7 +3,7 @@
 #include "shading/vertex_program.h"
 #include "shading/pixel_program.h"
 
-struct ModelObject
+struct MeshGroup
 {
     ModelData modelData;
     std::unique_ptr<VertexProgram> vertexProgram;

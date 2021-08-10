@@ -16,144 +16,14 @@
         ctype = d.type;                     \
     }
 
-void SWRenderer::SetHWND(HWND hwnd)
-{
-    this->hwnd = hwnd;
-}
-void SWRenderer::MouseDown()
-{
-    if (hwnd != 0)
-    {
-        SetCapture(hwnd);
-    }
-    mouseCaptured = true;
-}
-
-void SWRenderer::MouseUp()
-{
-    if (hwnd != 0)
-    {
-        ReleaseCapture();
-    }
-    mouseCaptured = false;
-    lastMouseX = -1;
-    lastMouseY = -1;
-}
-
-void SWRenderer::MouseWheel(int val)
-{
-    cameraDistance += val / 100.f;
-}
-
-void SWRenderer::MouseMove(int x, int y)
-{
-    if (!mouseCaptured)
-    {
-        return;
-    }
-    if (lastMouseX == -1)
-    {
-        lastMouseX = x;
-    }
-    if (lastMouseY == -1)
-    {
-        lastMouseY = y;
-    }
-    auto deltaX = x - lastMouseX;
-    auto deltaY = y - lastMouseY;
-    cubeRotation.x -= (float)deltaX * 2.0 / (float)width;
-    cubeRotation.y -= (float)deltaY * 2.0 / (float)height;
-    cubeRotation.y = std::clamp(cubeRotation.y, -89.99f, 89.99f);
-    lastMouseX = x;
-    lastMouseY = y;
-}
-
-// clang-format off
-float vertexList[] = {
-    // back
-    0, 0, 0, 0, 0, 0, 0, 0, -1,
-    0, 1, 0, 0, 1, 0, 0, 0, -1,
-    1, 1, 0, 1, 1, 0, 0, 0, -1,
-    1, 0, 0, 1, 0, 0, 0, 0, -1,
-
-    // left
-    0, 0, 1, 0, 0, 0, -1, 0, 0,
-    0, 1, 1, 0, 1, 0, -1, 0, 0,
-    0, 1, 0, 1, 1, 0, -1, 0, 0,
-    0, 0, 0, 1, 0, 0, -1, 0, 0,
-
-    // front
-    1, 0, 1, 0, 0, 0, 0, 0, 1,
-    1, 1, 1, 0, 1, 0, 0, 0, 1,
-    0, 1, 1, 1, 1, 0, 0, 0, 1,
-    0, 0, 1, 1, 0, 0, 0, 0, 1,
-
-    // right
-    1, 0, 0, 0, 0, 0, 1, 0, 0,
-    1, 1, 0, 0, 1, 0, 1, 0, 0,
-    1, 1, 1, 1, 1, 0, 1, 0, 0,
-    1, 0, 1, 1, 0, 0, 1, 0, 0,
-
-    // bottom
-    1, 0, 0, 0, 0, 0, 0, -1, 0,
-    1, 0, 1, 0, 1, 0, 0, -1, 0,
-    0, 0, 1, 1, 1, 0, 0, -1, 0,
-    0, 0, 0, 1, 0, 0, 0, -1, 0,
-
-    // top
-    0, 1, 0, 0, 0, 0, 0, 1, 0,
-    0, 1, 1, 0, 1, 0, 0, 1, 0,
-    1, 1, 1, 1, 1, 0, 0, 1, 0,
-    1, 1, 0, 1, 0, 0, 0, 1, 0,
-    };
-
-// clang-format on
-
-int indexList[] = {
-    // front
-    0, 1, 2,
-    0, 2, 3,
-
-    // left
-    4, 5, 6,
-    4, 6, 7,
-
-    // back
-    8, 9, 10,
-    8, 10, 11,
-
-    // right
-    12, 13, 14,
-    12, 14, 15,
-
-    // bottom
-    16, 17, 18,
-    16, 18, 19,
-
-    // top
-    20, 21, 22,
-    20, 22, 23};
-
 SWRenderer::SWRenderer(HDC hdc, int w, int h) : hdc(hdc), width(w), height(h)
 {
     memDc = ::CreateCompatibleDC(hdc);
-
-    // textureData.reset(stbi_load("D:\\Desktop\\a.png", &textureW, &textureH, &textureChannels, STBI_rgb_alpha), stbi_image_free);
-
-    // modelData.SetIndexList({std::cbegin(indexList), std::cend(indexList)});
-    // modelData.SetVertexList({std::cbegin(vertexList), std::cend(vertexList)});
-
-    // modelData.SetVertexDescriptor({
-    //     {VertexAttributes::Position, VertexAttributeTypes::Vec3},
-    //     {VertexAttributes::TextureCoordinate, VertexAttributeTypes::Vec3},
-    //     {VertexAttributes::Normal, VertexAttributeTypes::Vec3},
-    // });
-    // SetProgram();
 }
 
-void SWRenderer::learColorBuffer()
+void SWRenderer::ClearColorBuffer(std::uint32_t color)
 {
-    canvas[bufferIndex]->Clear(0)
+    canvas[bufferIndex]->Clear(color);
 }
 
 void SWRenderer::ClearZBuffer()
@@ -265,86 +135,71 @@ struct Triangle
     }
 };
 
-void SWRenderer::SetProgram(VertexProgram &vp, PixelProgram &pp)
+ProgramContext SWRenderer::LinkProgram(VertexProgram &vp, PixelProgram &pp) noexcept
 {
-    this->vertexProgram = &vp;
-    this->pixelProgram = &pp;
+    ProgramContext ctx;
+    ctx.vertexProgram = &vp;
+    ctx.pixelProgram = &pp;
 
-    vsInputDesc = vertexProgram->GetInput();
-    vsOutputDesc = vertexProgram->GetOutput();
-    psInputDesc = pixelProgram->GetInput();
+    ctx.vsInputDesc = ctx.vertexProgram->GetInput();
+    ctx.vsOutputDesc = ctx.vertexProgram->GetOutput();
+    ctx.psInputDesc = ctx.pixelProgram->GetInput();
 
-    vertexAttributes = modelData.GetAttributeMask();
-    inputVertexAttributes = getVertexAttributeMask(vsInputDesc);
-    vertexEntry = vertexProgram->GetEntry();
-    pixelEntry = pixelProgram->GetEntry();
+    ctx.inputVertexAttributes = getVertexAttributeMask(ctx.vsInputDesc);
+    ctx.vertexEntry = ctx.vertexProgram->GetEntry();
+    ctx.pixelEntry = ctx.pixelProgram->GetEntry();
 
-    for (auto d : vsInputDesc)
-    {
-        auto flag = ((std::uint32_t)d.attr);
-        if ((flag & vertexAttributes) == 0)
-        {
-            assert(false);
-        }
-    }
-
-    for (auto d : psInputDesc)
-    {
-        auto flag = ((std::uint32_t)d.attr);
-        if (flag != 0 && (flag & vertexAttributes) == 0)
-        {
-            assert(false);
-        }
-    }
-    auto vsOutputMask = getVertexAttributeMask(vsOutputDesc);
+    auto vsOutputMask = getVertexAttributeMask(ctx.vsOutputDesc);
     if (vsOutputMask & ((std::uint32_t)(VertexAttributes::Position)) == 0)
     {
         assert(false);
     }
 
-    vsOutputsUv = (vsOutputMask & ((std::uint32_t)(VertexAttributes::TextureCoordinate))) != 0;
-    vsOutputsColor = (vsOutputMask & ((std::uint32_t)(VertexAttributes::Color))) != 0;
+    ctx.vsOutputsUv = (vsOutputMask & ((std::uint32_t)(VertexAttributes::TextureCoordinate))) != 0;
+    ctx.vsOutputsColor = (vsOutputMask & ((std::uint32_t)(VertexAttributes::Color))) != 0;
 
     VertexAttributeTypes _vsType;
     int _vsIdx = 0;
 
-    for (int i = 0; i < vsOutputDesc.size(); i++)
+    for (int i = 0; i < ctx.vsOutputDesc.size(); i++)
     {
-        auto &&d = vsOutputDesc[i];
-        LOAD_ATTR_IDX(VertexAttributes::Position, vsOutputPosIdx, vsOutputPosType)
-        LOAD_ATTR_IDX(VertexAttributes::TextureCoordinate, vsOutputUvIdx, vsOutputUvType)
-        LOAD_ATTR_IDX(VertexAttributes::Color, vsOutputColorIdx, vsOutputColorType)
+        auto &&d = ctx.vsOutputDesc[i];
+        LOAD_ATTR_IDX(VertexAttributes::Position, ctx.vsOutputPosIdx, ctx.vsOutputPosType)
+        LOAD_ATTR_IDX(VertexAttributes::TextureCoordinate, ctx.vsOutputUvIdx, ctx.vsOutputUvType)
+        LOAD_ATTR_IDX(VertexAttributes::Color, ctx.vsOutputColorIdx, ctx.vsOutputColorType)
     }
 
-    for (int src = 0; src < psInputDesc.size(); src++)
+    for (int src = 0; src < ctx.psInputDesc.size(); src++)
     {
-        auto &&d = psInputDesc[src];
+        auto &&d = ctx.psInputDesc[src];
         std::vector<VertexDataDescriptor>::const_iterator iter;
         if (d.attr == VertexAttributes::Custom)
         {
-            iter = std::find_if(std::cbegin(vsOutputDesc), std::cend(vsOutputDesc), [d](auto &&vd)
+            iter = std::find_if(std::cbegin(ctx.vsOutputDesc), std::cend(ctx.vsOutputDesc), [d](auto &&vd)
                                 { return vd.name && strcmp(d.name, vd.name) == 0; });
         }
         else
         {
-            iter = std::find_if(std::cbegin(vsOutputDesc), std::cend(vsOutputDesc), [d](auto &&vd)
+            iter = std::find_if(std::cbegin(ctx.vsOutputDesc), std::cend(ctx.vsOutputDesc), [d](auto &&vd)
                                 { return d.attr == vd.attr; });
         }
-        if (iter == std::cend(vsOutputDesc))
+        if (iter == std::cend(ctx.vsOutputDesc))
         {
             assert(false);
         }
-        psVsIndexMap[src] = iter - std::cbegin(vsOutputDesc);
+        ctx.psVsIndexMap[src] = iter - std::cbegin(ctx.vsOutputDesc);
     }
-
-    // pixelProgram.UseLights({&pointLight, &ambientLight});
-    // pixelProgram.SetDiffuseMap(textureData.get(), textureH, textureW);
+    return ctx;
 }
 
-void SWRenderer::SetMesh(ModelData mesh)
+void SWRenderer::SetProgram(ProgramContext& programCtx)
 {
-    modelData = std::move(mesh);
+    this->programCtx = &programCtx;
+}
 
+void SWRenderer::SetMesh(ModelData &mesh)
+{
+    modelData = &mesh;
 }
 
 void SWRenderer::SetViewMatrix(const glm::mat4 &view)
@@ -357,20 +212,19 @@ void SWRenderer::ProjectionMatrix(const glm::mat4 &proj)
     projectionMatrix = proj;
 }
 
-void SWRenderer::Render(float timeElapsed)
+void SWRenderer::Draw(float timeElapsed)
 {
     stats.emplace_back(timeElapsed);
     if (stats.size() > 5)
     {
         stats.pop_front();
     }
-    auto avgTime = std::accumulate(std::begin(stats), std::end(stats), 0.f) / 5.0;
+    auto avgTime = std::accumulate(std::begin(stats), std::end(stats), 0.f) / stats.size();
 
     float canvasWidth = 1;
     float canvasHeight = 1;
 
-    auto projVP = projectionMatrix * viewTransform;
-    int nbIndices = modelData.GetNumberIndices();
+    int nbIndices = modelData->GetNumberIndices();
 
     std::vector<Triangle> triangleList;
     triangleList.resize(nbIndices / 3);
@@ -388,31 +242,31 @@ void SWRenderer::Render(float timeElapsed)
 
         for (int j = 0; j < 3; j++)
         {
-            vsInput[j].SetDataDescriptor(vsInputDesc);
-            for (auto &&d : vsInputDesc)
+            vsInput[j].SetDataDescriptor(programCtx->vsInputDesc);
+            for (auto &&d : programCtx->vsInputDesc)
             {
                 for (int k = 0; k < (int)d.type; k++)
                 {
-                    vsInput[j].SetData(0, k, d.attr, modelData.GetVertexData(i + j, k, d.attr));
+                    vsInput[j].SetData(0, k, d.attr, modelData->GetVertexData(i + j, k, d.attr));
                 }
             }
-            vsOutput[j] = vertexEntry(vertexProgram, vsInput[j]);
-            for (int i = 0; i < (int)vsOutputPosType; i++)
+            vsOutput[j] = programCtx->vertexEntry(programCtx->vertexProgram, vsInput[j]);
+            for (int i = 0; i < (int)programCtx->vsOutputPosType; i++)
             {
-                v[j][i] = vsOutput[j].GetData(0, i, vsOutputPosIdx);
+                v[j][i] = vsOutput[j].GetData(0, i, programCtx->vsOutputPosIdx);
             }
-            for (int i = 0; i < (int)vsOutputUvType; i++)
+            for (int i = 0; i < (int)programCtx->vsOutputUvType; i++)
             {
-                if (vsOutputsUv)
+                if (programCtx->vsOutputsUv)
                 {
-                    uv[j][i] = vsOutput[j].GetData(0, i, vsOutputUvIdx);
+                    uv[j][i] = vsOutput[j].GetData(0, i, programCtx->vsOutputUvIdx);
                 }
             }
-            for (int i = 0; i < (int)vsOutputColorType; i++)
+            for (int i = 0; i < (int)programCtx->vsOutputColorType; i++)
             {
-                if (vsOutputsColor)
+                if (programCtx->vsOutputsColor)
                 {
-                    color[j][i] = vsOutput[j].GetData(0, i, vsOutputColorIdx);
+                    color[j][i] = vsOutput[j].GetData(0, i, programCtx->vsOutputColorIdx);
                 }
             }
             v[j].w = 1;
@@ -428,35 +282,36 @@ void SWRenderer::Render(float timeElapsed)
         // backface culling
         auto t0 = sv[1] - sv[0];
         auto t1 = sv[2] - sv[1];
-        if (backFaceCulling && glm::cross(t0, t1).z < 0)
+        if (backFaceCulling && glm::cross(t0, t1).z > 0)
         {
             continue;
         }
+
         for (int j = 0; j < 3; j++)
         {
             sv[j] = glm::vec3{(sv[j].x + canvasWidth / 2.f) / canvasWidth, (sv[j].y + canvasHeight / 2.f) / canvasHeight, v[j].z};
-            rv[j] = glm::vec3{sv[j].x * width, (1.0 - sv[j].y) * height, -sv[j].z};
+            rv[j] = glm::vec3{sv[j].x * width, (1.0 - sv[j].y) * height, sv[j].z};
         }
 
-        if (vsOutputsUv)
+        if (programCtx->vsOutputsUv)
         {
             for (int j = 0; j < 3; j++)
             {
                 uv[j] /= rv[j].z;
-                for (int i = 0; i < (int)vsOutputUvType; i++)
+                for (int i = 0; i < (int)programCtx->vsOutputUvType; i++)
                 {
-                    vsOutput[j].SetData(0, i, vsOutputUvIdx, uv[j][i]);
+                    vsOutput[j].SetData(0, i, programCtx->vsOutputUvIdx, uv[j][i]);
                 }
             }
         }
-        if (vsOutputsColor)
+        if (programCtx->vsOutputsColor)
         {
             for (int j = 0; j < 3; j++)
             {
                 color[j] /= rv[j].z;
-                for (int i = 0; i < (int)vsOutputUvType; i++)
+                for (int i = 0; i < (int)programCtx->vsOutputUvType; i++)
                 {
-                    vsOutput[j].SetData(0, i, vsOutputColorIdx, color[j][i]);
+                    vsOutput[j].SetData(0, i, programCtx->vsOutputColorIdx, color[j][i]);
                 }
             }
         }
@@ -475,7 +330,6 @@ void SWRenderer::Render(float timeElapsed)
     std::sort(std::begin(triangleList), std::end(triangleList), [](const Triangle &a, const Triangle &b)
               { return a.avg < b.avg; });
 
-    canvas[bufferIndex]->AddText(0, 0, 12, std::to_string(1.0 / avgTime), 0xFFFFFFFF);
 
 #ifndef _DEBUG
 #pragma omp barrier
@@ -483,7 +337,7 @@ void SWRenderer::Render(float timeElapsed)
     for (int y = 0; y < height; y++)
     {
 #ifndef _DEBUG
-#pragma omp parallel for
+// #pragma omp parallel for
 #endif
         for (int x = 0; x < width; x++)
         {
@@ -504,20 +358,20 @@ void SWRenderer::Render(float timeElapsed)
                 float depth = 1.0 / (1.0 / tri.p0.z * weight.x + 1.0 / tri.p1.z * weight.y + 1.0 / tri.p2.z * weight.z);
 
                 ProgramDataPack psInput;
-                psInput.SetDataDescriptor(psInputDesc);
+                psInput.SetDataDescriptor(programCtx->psInputDesc);
 
                 int _psIdx;
                 VertexAttributeTypes _psType;
 
-                for (int id = 0; id < psInputDesc.size(); id++)
+                for (int id = 0; id < programCtx->psInputDesc.size(); id++)
                 {
-                    auto &&d = psInputDesc[id];
+                    auto &&d = programCtx->psInputDesc[id];
                     glm::vec4 tmpVal[3];
                     for (int j = 0; j < 3; j++)
                     {
                         for (int i = 0; i < (int)d.type; i++)
                         {
-                            tmpVal[j][i] = tri.vsOutput[j].GetData(0, i, psVsIndexMap.at(id));
+                            tmpVal[j][i] = tri.vsOutput[j].GetData(0, i, programCtx->psVsIndexMap.at(id));
                         }
                     }
 
@@ -536,7 +390,7 @@ void SWRenderer::Render(float timeElapsed)
                     }
                 }
 
-                auto finalColor = pixelEntry(pixelProgram, psInput);
+                auto finalColor = programCtx->pixelEntry(programCtx->pixelProgram, psInput);
 
                 if (depthTestEnabled && zBuffer[y * width + x] < depth)
                 {
@@ -547,13 +401,14 @@ void SWRenderer::Render(float timeElapsed)
                     zBuffer[y * width + x] = depth;
                 }
 
-                buffer[bufferIndex][(height - y) * width * 4 + x * 4 + 0] = (std::uint8_t)std::clamp(finalColor.r * 255.f, 0.f, 255.f);
+                buffer[bufferIndex][(height - y) * width * 4 + x * 4 + 0] = (std::uint8_t)std::clamp(finalColor.b * 255.f, 0.f, 255.f);
                 buffer[bufferIndex][(height - y) * width * 4 + x * 4 + 1] = (std::uint8_t)std::clamp(finalColor.g * 255.f, 0.f, 255.f);
-                buffer[bufferIndex][(height - y) * width * 4 + x * 4 + 2] = (std::uint8_t)std::clamp(finalColor.b * 255.f, 0.f, 255.f);
+                buffer[bufferIndex][(height - y) * width * 4 + x * 4 + 2] = (std::uint8_t)std::clamp(finalColor.r * 255.f, 0.f, 255.f);
             }
         }
 #ifndef _DEBUG
 #pragma omp barrier
 #endif
     }
+    canvas[bufferIndex]->AddText(0, 0, 12, std::to_string(1.0 / avgTime), 0xFFFFFFFF);
 }

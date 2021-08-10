@@ -6,7 +6,7 @@ std::vector<VertexDataDescriptor> BlinnMaterial::GetInput() const noexcept
             {VertexAttributes::Normal, VertexAttributeTypes::Vec3},
             {VertexAttributes::Custom, VertexAttributeTypes::Vec3, "fragPos"}};
 }
-
+#include <iostream>
 PixelFunction BlinnMaterial::GetEntry() const noexcept
 {
     return [](PixelProgram *d, const ProgramDataPack &args) -> glm::vec4
@@ -17,13 +17,13 @@ PixelFunction BlinnMaterial::GetEntry() const noexcept
         auto fragPos = args.GetData<glm::vec3>(0, "fragPos");
         
         auto imgX = std::clamp((int)std::round(uvw.x * self->textureW), 0, self->textureW - 1);
-        auto imgY = std::clamp((int)std::round(uvw.y * self->textureH), 0, self->textureH - 1) + 1;
+        auto imgY = std::clamp((int)std::round(uvw.y * self->textureH), 0, self->textureH - 1);
         glm::vec4 outColor{
-            self->textureData[(self->textureH - imgY) * self->textureW * 4 + imgX * 4 + 2] / 255.0,
-            self->textureData[(self->textureH - imgY) * self->textureW * 4 + imgX * 4 + 1] / 255.0,
-            self->textureData[(self->textureH - imgY) * self->textureW * 4 + imgX * 4 + 0] / 255.0,
+            self->textureData[(imgY) * self->textureW * 4 + imgX * 4 + 0] / 255.0,
+            self->textureData[(imgY) * self->textureW * 4 + imgX * 4 + 1] / 255.0,
+            self->textureData[(imgY) * self->textureW * 4 + imgX * 4 + 2] / 255.0,
             1.0};
-        return outColor;
+
         glm::vec4 fragPos4{fragPos, 1.0};
         glm::vec4 lightValue{0.0};
         for (auto &&light : self->lightEntry)

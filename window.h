@@ -1,6 +1,5 @@
 #pragma once
 #include "tstring.h"
-#include "swrenderer.h"
 #include "scene_controller.h"
 
 
@@ -13,7 +12,7 @@ class Window
     int width = 500;
     int height = 500;
     HDC mHdc;
-    std::unique_ptr<SWRenderer> renderer;
+    std::unique_ptr<SceneController> scene;
     std::thread renderTh;
     volatile bool stop = false;
     std::chrono::steady_clock::time_point lastTime = std::chrono::steady_clock::now();
