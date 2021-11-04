@@ -1,5 +1,5 @@
 #pragma once
-#include "canvas.h"
+#include "icanvas.h"
 #include "shading/light/light.h"
 #include "shading/vertex_program.h"
 #include "shading/pixel_program.h"
@@ -34,17 +34,18 @@ struct ProgramContext
     std::map<int, int> psVsIndexMap;
 };
 
+template<CanvasDrawable TCanvas>
 class SWRenderer
 {
+    static constexpr auto DEPTH_THRESHOLD = 0.01;
+    TCanvas canvas;
     int width = 500;
     int height = 500;
-    HDC hdc;
-    HDC memDc;
-    std::unique_ptr<Canvas> canvas[2];
-    HBITMAP bitmaps[2];
-    std::uint8_t *buffer[2];
-    long bufferIndex = 0;
-    float *zBuffer = nullptr;
+    int multisampleLevel = 8;
+    
+    std::unique_ptr<float[]> colorBuffer = nullptr;
+    std::unique_ptr<float[]> zBuffer = nullptr;
+    std::unique_ptr<float[]> accumulateBuffer = nullptr;
     bool depthTestEnabled = true;
     bool depthWriteEnabled = true;
     bool backFaceCulling = true;
@@ -56,19 +57,16 @@ class SWRenderer
     ProgramContext* programCtx = nullptr;
 
     std::list<float> stats;
-
-
 public:
     static ProgramContext LinkProgram(VertexProgram &vp, PixelProgram &pp) noexcept;
 
     void CreateBuffer(int pixelFormat);
-    SWRenderer(HDC hdc, int w, int h);
+    template<CanvasDrawable T>
+    SWRenderer(T&& canvas);
     SWRenderer(const SWRenderer &) = delete;
     SWRenderer &operator=(const SWRenderer &) = delete;
-    void SwapBuffer();
-    HBITMAP GetBitmap() const;
 
-    std::uint8_t* GetColorBuffer() noexcept { return buffer[bufferIndex]; }
+    std::unique_ptr<float[]>& GetColorBuffer() noexcept { return colorBuffer; }
     void ClearZBuffer();
     void ClearColorBuffer(std::uint32_t color);
     void SetProgram(ProgramContext& programCtx);
@@ -76,4 +74,16 @@ public:
     void SetViewMatrix(const glm::mat4 &view);
     void ProjectionMatrix(const glm::mat4 &proj);
     void Draw(float timeElapsed);
+    
+    auto& Canvas() noexcept
+    {
+        return canvas;
+    }
+
+private:
+    std::vector<glm::vec3> GenerateSubsamples(glm::vec3 pt);
+    void ClearAccumulateBuffer();
+    void ClearBuffer(std::unique_ptr<float[]>& buffer, std::size_t nElement, float value);
 };
+
+#include "swrenderer.inl"

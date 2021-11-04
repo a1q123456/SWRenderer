@@ -18,6 +18,6 @@
 - [ ] Caustics
 - [ ] Camera DOF
 - [ ] Shadows
-- [ ] MSAA
+- [x] MSAA
 - [ ] SSS Material
 

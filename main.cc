@@ -1,19 +1,25 @@
-#include "window.h"
+#include "iwindow.h"
+#include "platform_factory.h"
+#include "headless_window.h"
+#ifdef _WIN32
+#include "win32_window.h"
+#endif
 
-int WinMain(
+int 
+#ifdef _WIN32
+WinMain(
     HINSTANCE hInstance,
     HINSTANCE hPrevInstance,
     LPSTR lpCmdLine,
     int nShowCmd)
-{
-    try
-    {
-        Window wnd{hInstance, hPrevInstance, lpCmdLine, nShowCmd};
-        return wnd.Exec();
-    }
-    catch (const std::exception& e)
-    {
-        MessageBoxA(nullptr, e.what(), "Error", MB_OK);
-    }
-    return -1;
+#else
+main()
+#endif
+{    
+#if defined(_WIN32) && !defined(SWR_HEADLESS_RENDERING)
+    Win32Window wnd{hInstance, hPrevInstance, lpCmdLine, nShowCmd};
+#else
+    HeadlessWindow wnd{500, 500};
+#endif
+    return wnd.Exec();
 }

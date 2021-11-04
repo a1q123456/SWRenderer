@@ -8,7 +8,7 @@ class PointLight : public Light
     float maxRange = 100.f;
 
 public:
-    bool IsAmbient() const noexcept { return false; }
+    bool IsAmbient() const noexcept override { return false; }
     void SetRange(const float &range) noexcept { this->maxRange = range; }
     void SetPosition(const glm::vec4 &pos) noexcept { this->pos = pos; }
     void SetLightColor(const glm::vec4 &lightColor) noexcept { this->lightColor = lightColor; }

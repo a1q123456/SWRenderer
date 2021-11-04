@@ -45,7 +45,7 @@ PixelFunction PhongMaterial::GetEntry() const noexcept
             lightValue += (diffuse + (float)specular * color);
         }
 
-        return outColor * lightValue;
+        return glm::vec4{glm::vec3{outColor * lightValue}, 1.0};
     };
 }
 

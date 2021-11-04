@@ -25,5 +25,5 @@ public:
     void SetViewPosition(const glm::vec3 &pos) noexcept { cameraPos = pos; }
     std::vector<VertexDataDescriptor> GetInput() const noexcept override;
     PixelFunction GetEntry() const noexcept override;
-    void UseLights(const std::vector<Light *> &lights) noexcept;
+    void UseLights(const std::vector<Light *> &lights) noexcept override;
 };

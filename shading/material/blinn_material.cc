@@ -1,4 +1,5 @@
 #include "blinn_material.h"
+#include "anisotropic_sampler.h"
 
 std::vector<VertexDataDescriptor> BlinnMaterial::GetInput() const noexcept
 {
@@ -6,7 +7,7 @@ std::vector<VertexDataDescriptor> BlinnMaterial::GetInput() const noexcept
             {VertexAttributes::Normal, VertexAttributeTypes::Vec3},
             {VertexAttributes::Custom, VertexAttributeTypes::Vec3, "fragPos"}};
 }
-#include <iostream>
+
 PixelFunction BlinnMaterial::GetEntry() const noexcept
 {
     return [](PixelProgram *d, const ProgramDataPack &args) -> glm::vec4
@@ -47,7 +48,7 @@ PixelFunction BlinnMaterial::GetEntry() const noexcept
             lightValue += (diffuse + (float)specular * color);
         }
 
-        return outColor * lightValue;
+        return glm::vec4{glm::vec3{outColor * lightValue}, 1.0};
     };
 }
 

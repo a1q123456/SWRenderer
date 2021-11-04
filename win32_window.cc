@@ -1,17 +1,16 @@
-#include "window.h"
+#include "win32_window.h"
 #include <WinUser.h>
 #include <windowsx.h>
 #include "win32exception.h"
 #include <chrono>
-#include <Windows.h>
 
-LRESULT CALLBACK Window::WndProc(
+LRESULT CALLBACK Win32Window::WndProc(
     _In_ HWND hWnd,
     _In_ UINT message,
     _In_ WPARAM wParam,
     _In_ LPARAM lParam)
 {
-    auto self = reinterpret_cast<Window *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+    auto self = reinterpret_cast<Win32Window *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 
     PAINTSTRUCT ps;
     HDC hdc;
@@ -62,16 +61,15 @@ LRESULT CALLBACK Window::WndProc(
     return 0;
 }
 
-void Window::Render()
+void Win32Window::Render()
 {
-    scene->SwapBuffer();
     auto now = std::chrono::steady_clock::now();
     auto dur = now - lastTime;
     lastTime = now;
-    auto t = dur.count() / 1'000'000'000.0;
+    auto t = dur.count() * decltype(dur)::duration::period::num / static_cast<float>(decltype(dur)::duration::period::den);
     scene->Render(t);
     HDC src = CreateCompatibleDC(mHdc);       // hdc - Device context for window, I've got earlier with GetDC(hWnd) or GetDC(NULL);
-    SelectObject(src, scene->GetBitmap()); // Inserting picture into our temp HDC
+    SelectObject(src, scene->Canvas().Bitmap()); // Inserting picture into our temp HDC
     BitBlt(mHdc,                              // Destination
            0,                                 // x and
            0,                                 // y - upper-left corner of place, where we'd like to copy
@@ -85,25 +83,17 @@ void Window::Render()
     DeleteDC(src); // Deleting temp HDC
 }
 
-Window::~Window()
+Win32Window::~Win32Window()
 {
-    stop = true;
-    try
-    {
-        renderTh.join();
-    }
-    catch (...)
-    {
-    }
 }
 
-Window::Window(
+Win32Window::Win32Window(
     HINSTANCE hInstance,
     HINSTANCE hPrevInstance,
     LPSTR lpCmdLine,
     int nShowCmd,
     const TString &title,
-    const TString &windowClass) : mTitle(title), mWindowClass(windowClass)
+    const TString &windowClass) : mTitle(title), mWin32WindowClass(windowClass)
 {
 
     mWcex.cbSize = sizeof(WNDCLASSEX);
@@ -116,7 +106,7 @@ Window::Window(
     mWcex.hCursor = LoadCursor(NULL, IDC_ARROW);
     mWcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     mWcex.lpszMenuName = NULL;
-    mWcex.lpszClassName = mWindowClass.c_str();
+    mWcex.lpszClassName = mWin32WindowClass.c_str();
     mWcex.hIconSm = LoadIcon(mWcex.hInstance, IDI_APPLICATION);
     if (!RegisterClassEx(&mWcex))
     {
@@ -124,7 +114,7 @@ Window::Window(
     }
     hWnd = CreateWindowEx(
         WS_EX_OVERLAPPEDWINDOW,
-        mWindowClass.c_str(),
+        mWin32WindowClass.c_str(),
         mTitle.c_str(),
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, CW_USEDEFAULT,
@@ -137,7 +127,7 @@ Window::Window(
     // GetClientRect(hWnd, &clientRect);
     // clientRect.right = clientRect.left + width;
     // clientRect.bottom = clientRect.top + height;
-    // AdjustWindowRect(&clientRect, 0, FALSE);
+    // AdjustWin32WindowRect(&clientRect, 0, FALSE);
     SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)this);
     if (!hWnd)
     {
@@ -172,54 +162,26 @@ Window::Window(
     ShowWindow(hWnd,
                nShowCmd);
     UpdateWindow(hWnd);
-    scene = std::make_unique<SceneController>(mHdc, width, height);
+    scene = std::make_unique<SceneController<Win32Canvas>>(Win32Canvas{mHdc, width, height});
     scene->SetHWND(hWnd);
     scene->CreateBuffer(iPixelFormat);
-
-    // renderTh = std::thread{[=]()
-    //                        {
-    //                            auto lastTime = std::chrono::steady_clock::now();
-    //                            while (!stop)
-    //                            {
-    //                                scene->SwapBuffer();
-    //                                auto now = std::chrono::steady_clock::now();
-    //                                auto dur = now - lastTime;
-    //                                lastTime = now;
-    //                                auto t = dur.count() / 1'000'000'000.0;
-    //                                scene->Render(t);
-    //                                HDC src = CreateCompatibleDC(mHdc);      // hdc - Device context for window, I've got earlier with GetDC(hWnd) or GetDC(NULL);
-    //                                SelectObject(src, scene->GetBitmap()); // Inserting picture into our temp HDC
-    //                                BitBlt(mHdc,                             // Destination
-    //                                       0,                                // x and
-    //                                       0,                                // y - upper-left corner of place, where we'd like to copy
-    //                                       width,                            // width of the region
-    //                                       height,                           // height
-    //                                       src,                              // source
-    //                                       0,                                // x and
-    //                                       0,                                // y of upper left corner  of part of the source, from where we'd like to copy
-    //                                       SRCCOPY);                         // Defined DWORD to juct copy pixels. Watch more on msdn;
-
-    //                                DeleteDC(src); // Deleting temp HDC
-    //                            }
-    //                        }};
 }
 
-int Window::Width() const
+int Win32Window::Width() const
 {
     return width;
 }
 
-int Window::Height() const
+int Win32Window::Height() const
 {
     return height;
 }
 
-int Window::Exec()
+int Win32Window::Exec()
 {
     MSG msg;
     while (true)
     {
-
         while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
         {
             if (msg.message == WM_QUIT)

@@ -1,20 +1,20 @@
 #pragma once
+#include "iwindow.h"
 #include "tstring.h"
 #include "scene_controller.h"
+#include "win32_canvas.h"
 
 
-class Window
+class Win32Window
 {
     TString mTitle;
-    TString mWindowClass;
+    TString mWin32WindowClass;
     HWND hWnd;
     WNDCLASSEX mWcex;
     int width = 500;
     int height = 500;
     HDC mHdc;
-    std::unique_ptr<SceneController> scene;
-    std::thread renderTh;
-    volatile bool stop = false;
+    std::unique_ptr<SceneController<Win32Canvas>> scene;
     std::chrono::steady_clock::time_point lastTime = std::chrono::steady_clock::now();
     static LRESULT CALLBACK WndProc(
         _In_ HWND hWnd,
@@ -23,16 +23,16 @@ class Window
         _In_ LPARAM lParam);
     void Render();
 public:
-    ~Window();
-    Window(
+    ~Win32Window();
+    Win32Window(
         HINSTANCE hInstance,
         HINSTANCE hPrevInstance,
         LPSTR lpCmdLine,
         int nShowCmd,
         const TString &title = _T("Software Renderer"),
         const TString &windowClass = _T("SWRenderer"));
-    Window(const Window &) = delete;
-    Window &operator=(const Window &) = delete;
+    Win32Window(const Win32Window &) = delete;
+    Win32Window &operator=(const Win32Window &) = delete;
     int Width() const;
     int Height() const;
     int Exec();
