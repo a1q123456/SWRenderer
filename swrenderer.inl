@@ -31,7 +31,6 @@ void SWRenderer<Canvas>::ClearZBuffer()
 template <CanvasDrawable Canvas>
 void SWRenderer<Canvas>::CreateBuffer(int pixelFormat)
 {
-    accumulateBuffer.reset(new float[width * height]);
     zBuffer.reset(new float[width * height]);
     colorBuffer.reset(new float[width * height * 4]);
 }
@@ -237,12 +236,6 @@ std::vector<glm::vec3> SWRenderer<Canvas>::GenerateSubsamples(glm::vec3 pt)
 }
 
 template <CanvasDrawable Canvas>
-void SWRenderer<Canvas>::ClearAccumulateBuffer()
-{
-    ClearBuffer(accumulateBuffer, 1, 0);
-}
-
-template <CanvasDrawable Canvas>
 void SWRenderer<Canvas>::ClearBuffer(std::unique_ptr<float[]> &buffer, std::size_t nElement, float value)
 {
     for (int i = 0; i < width * nElement * height; i++)
@@ -254,7 +247,6 @@ void SWRenderer<Canvas>::ClearBuffer(std::unique_ptr<float[]> &buffer, std::size
 template <CanvasDrawable Canvas>
 void SWRenderer<Canvas>::Draw(float timeElapsed)
 {
-    ClearAccumulateBuffer();
     stats.emplace_back(timeElapsed);
     if (stats.size() > 5)
     {

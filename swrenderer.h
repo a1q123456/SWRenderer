@@ -45,7 +45,6 @@ class SWRenderer
     
     std::unique_ptr<float[]> colorBuffer = nullptr;
     std::unique_ptr<float[]> zBuffer = nullptr;
-    std::unique_ptr<float[]> accumulateBuffer = nullptr;
     bool depthTestEnabled = true;
     bool depthWriteEnabled = true;
     bool backFaceCulling = true;
@@ -82,7 +81,6 @@ public:
 
 private:
     std::vector<glm::vec3> GenerateSubsamples(glm::vec3 pt);
-    void ClearAccumulateBuffer();
     void ClearBuffer(std::unique_ptr<float[]>& buffer, std::size_t nElement, float value);
 };
 

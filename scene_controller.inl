@@ -80,6 +80,10 @@ SceneController<Canvas>::SceneController(T&& canvas) : width(canvas.Width()), he
     renderer.ProjectionMatrix(projectionMatrix);
 
     textureData.reset(stbi_load("sample_640x426.jpeg", &textureW, &textureH, &textureChannels, STBI_rgb_alpha), stbi_image_free);
+    if (!textureData)
+    {
+        throw std::runtime_error(stbi_failure_reason());
+    }
 
     modelData.SetIndexList({std::cbegin(indexList), std::cend(indexList)});
     modelData.SetVertexList({std::cbegin(vertexList), std::cend(vertexList)});
