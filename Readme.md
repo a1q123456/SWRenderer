@@ -1,16 +1,23 @@
 
 # Road map
 
+- [x] Rasterizer
 - [x] Wireframe
 - [x] Texturing
 - [x] Ambient Light
 - [x] Point Light
-- [ ] Spot Light
-- [ ] Directional Light
-- [ ] Area Light
 - [x] Lambert Material
 - [x] Phong Material
 - [x] Blinn Material
+- [x] MSAA
+- [ ] Mipmap
+- [ ] Anisotropic Filter
+- [ ] Bilinear Filter
+- [ ] Trilinear Filter
+- [ ] Ray Tracer
+- [ ] Spot Light
+- [ ] Directional Light
+- [ ] Area Light
 - [ ] Normal map
 - [ ] OBJ+MTL Loader
 - [ ] Reflection
@@ -18,6 +25,5 @@
 - [ ] Caustics
 - [ ] Camera DOF
 - [ ] Shadows
-- [x] MSAA
 - [ ] SSS Material
 
