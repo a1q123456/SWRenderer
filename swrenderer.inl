@@ -29,7 +29,7 @@ void SWRenderer<Canvas>::ClearZBuffer()
 }
 
 template <CanvasDrawable Canvas>
-void SWRenderer<Canvas>::CreateBuffer(int pixelFormat)
+void SWRenderer<Canvas>::CreateBuffer(EPixelFormat pixelFormat)
 {
     zBuffer.reset(new float[width * height]);
     colorBuffer.reset(new float[width * height * 4]);
@@ -140,11 +140,11 @@ ProgramContext SWRenderer<Canvas>::LinkProgram(VertexProgram &vp, PixelProgram &
     ctx.vsOutputDesc = ctx.vertexProgram->GetOutput();
     ctx.psInputDesc = ctx.pixelProgram->GetInput();
 
-    ctx.inputVertexAttributes = getVertexAttributeMask(ctx.vsInputDesc);
+    ctx.inputVertexAttributes = GetVertexAttributeMask(ctx.vsInputDesc);
     ctx.vertexEntry = ctx.vertexProgram->GetEntry();
     ctx.pixelEntry = ctx.pixelProgram->GetEntry();
 
-    auto vsOutputMask = getVertexAttributeMask(ctx.vsOutputDesc);
+    auto vsOutputMask = GetVertexAttributeMask(ctx.vsOutputDesc);
 
     assert((vsOutputMask & ((std::uint32_t)(VertexAttributes::Position))));
 
@@ -378,7 +378,7 @@ void SWRenderer<Canvas>::Draw(float timeElapsed)
                 std::make_tuple(glm::vec4{}, std::numeric_limits<float>::infinity())};
             std::vector<int> colorMasks{};
             colorMasks.resize(pixelSubsamples.size(), 0);
-
+            
             for (auto &&tri : triangleList)
             {
                 if (!tri.InRange(pt))

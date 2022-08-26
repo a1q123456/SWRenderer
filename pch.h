@@ -5,6 +5,7 @@
 #endif
 
 #define _USE_MATH_DEFINES
+#include <cstddef>
 #include <cstring>
 #include <filesystem>
 #include <fstream>

@@ -3,6 +3,7 @@
 #include "tstring.h"
 #include "scene_controller.h"
 #include "win32_canvas.h"
+#include "test_scene.h"
 
 
 class Win32Window
@@ -11,10 +12,10 @@ class Win32Window
     TString mWin32WindowClass;
     HWND hWnd;
     WNDCLASSEX mWcex;
-    int width = 500;
-    int height = 500;
+    int width = 1000;
+    int height = 1000;
     HDC mHdc;
-    std::unique_ptr<SceneController<Win32Canvas>> scene;
+    std::unique_ptr<TestSceneController<Win32Canvas>> scene;
     std::chrono::steady_clock::time_point lastTime = std::chrono::steady_clock::now();
     static LRESULT CALLBACK WndProc(
         _In_ HWND hWnd,

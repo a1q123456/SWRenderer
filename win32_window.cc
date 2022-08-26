@@ -4,6 +4,7 @@
 #include "win32exception.h"
 #include <chrono>
 
+
 LRESULT CALLBACK Win32Window::WndProc(
     _In_ HWND hWnd,
     _In_ UINT message,
@@ -123,11 +124,7 @@ Win32Window::Win32Window(
         NULL,
         hInstance,
         nullptr);
-    // RECT clientRect;
-    // GetClientRect(hWnd, &clientRect);
-    // clientRect.right = clientRect.left + width;
-    // clientRect.bottom = clientRect.top + height;
-    // AdjustWin32WindowRect(&clientRect, 0, FALSE);
+
     SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)this);
     if (!hWnd)
     {
@@ -162,9 +159,9 @@ Win32Window::Win32Window(
     ShowWindow(hWnd,
                nShowCmd);
     UpdateWindow(hWnd);
-    scene = std::make_unique<SceneController<Win32Canvas>>(Win32Canvas{mHdc, width, height});
+    scene = std::make_unique<TestSceneController<Win32Canvas>>(Win32Canvas{mHdc, width, height});
     scene->SetHWND(hWnd);
-    scene->CreateBuffer(iPixelFormat);
+    scene->CreateBuffer(EPixelFormat::RGBA_U8);
 }
 
 int Win32Window::Width() const

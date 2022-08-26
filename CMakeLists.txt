@@ -5,6 +5,7 @@ project(swengine)
 add_executable(swengine WIN32  
 "main.cc" 
 "stbi.cc"
+"pixel_format.cc"
 "raytracing_renderer.cc"
 "headless_window.cc"
 "headless_canvas.cc"
@@ -13,6 +14,7 @@ add_executable(swengine WIN32
 "shading/material/phong_material.cc"
 "shading/material/blinn_material.cc"
 "shading/light/point_light.cc"
+"texture-filtering/cubic_convolution_kernels.cc"
 )
 
 if (WIN32)
@@ -20,6 +22,7 @@ if (WIN32)
         "win32_window.cc" 
         "win32exception.cc" 
         "win32_canvas.cc"
+        "exception/throw.cc"
     )
 endif()
 
@@ -38,4 +41,3 @@ if (NOT WIN32)
     )
 endif()
 
-target_compile_definitions(swengine PUBLIC SWR_HEADLESS_RENDERING)

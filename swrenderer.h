@@ -9,6 +9,7 @@
 #include "shading/light/point_light.h"
 #include "shading/light/ambient_light.h"
 #include "shading/material/blinn_material.h"
+#include "pixel_format.h"
 
 struct ProgramContext
 {
@@ -59,7 +60,7 @@ class SWRenderer
 public:
     static ProgramContext LinkProgram(VertexProgram &vp, PixelProgram &pp) noexcept;
 
-    void CreateBuffer(int pixelFormat);
+    void CreateBuffer(EPixelFormat pixelFormat);
     template<CanvasDrawable T>
     SWRenderer(T&& canvas);
     SWRenderer(const SWRenderer &) = delete;

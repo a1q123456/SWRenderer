@@ -124,7 +124,7 @@ public:
 
     std::uint32_t GetAttributeMask() const noexcept
     {
-        return getVertexAttributeMask(descriptors);
+        return GetVertexAttributeMask(descriptors);
     }
 
     VertexAttributeTypes GetType(VertexAttributes attr) const noexcept

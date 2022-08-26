@@ -21,7 +21,7 @@ int HeadlessWindow::Exec()
 {
     auto scene = std::make_unique<SceneController<HeadlessCanvas>>(HeadlessCanvas{*this});
     scene->SetHWND(GetNativeHandle());
-    scene->CreateBuffer(0);
+    scene->CreateBuffer(EPixelFormat::RGBA_U8);
     scene->MouseDown();
     scene->MouseMove(0, 0);
     scene->MouseMove(100, 100);

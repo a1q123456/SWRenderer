@@ -5,6 +5,8 @@
 #include "win32_window.h"
 #endif
 
+#include "texture.h"
+
 int 
 #ifdef _WIN32
 WinMain(

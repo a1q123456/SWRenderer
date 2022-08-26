@@ -25,7 +25,7 @@ struct VertexDataDescriptor
 };
 
 template<typename T>
-inline std::uint32_t getVertexAttributeMask(T&& descriptors)
+inline std::uint32_t GetVertexAttributeMask(T&& descriptors)
 {
     std::uint32_t ret = 0;
     for (auto&& d : descriptors)

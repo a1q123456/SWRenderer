@@ -1,5 +1,4 @@
 #include "blinn_material.h"
-#include "anisotropic_sampler.h"
 
 std::vector<VertexDataDescriptor> BlinnMaterial::GetInput() const noexcept
 {

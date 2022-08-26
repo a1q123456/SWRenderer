@@ -3,3 +3,5 @@ build/**/*
 .editorconfig
 *.png
 *.jpeg
+.vs/**/*
+CMakeSettings.json

@@ -1,24 +1,56 @@
 #pragma once
+#include "exception/throw.h"
+#include "texture-filtering/filters.h"
 
-struct ResourceDescriptor
+template<typename ...TAlgo>
+class SamplerAlgorithmFactory
 {
-    int width;
-    int height;
+private:
+    TextureFilteringMethods samplerAlgorithmID = TextureFilteringMethods::Linear;
+
+    template<typename T, glm::length_t NChannels, glm::qualifier Q, std::size_t Dim, typename Algo>
+    glm::vec<NChannels, T, Q> Sample(
+        const TextureCoordinate<Dim>& coord, 
+        const std::vector<ResourceView<Dim>>& resourceViews,
+        double distance, 
+        Algo)
+    {
+        if (samplerAlgorithmID == Algo::ID)
+        {
+            return Algo::template Sample<T, NChannels, Q, Dim>(coord, resourceViews, distance);
+        }
+        ThrowException(SWRErrorCode::IndexOutOfRange);
+    }
+
+    template<typename T, glm::length_t NChannels, glm::qualifier Q, std::size_t Dim, typename Algo, typename ...Rest>
+    glm::vec<NChannels, T, Q> Sample(
+        const TextureCoordinate<Dim>& coord, 
+        const std::vector<ResourceView<Dim>>& resourceViews,
+        double distance, 
+        Algo, Rest...)
+    {
+        if (samplerAlgorithmID == Algo::ID)
+        {
+            return Algo::template Sample<T, NChannels, Q, Dim>(coord, resourceViews, distance);
+        }
+        return Sample<T, NChannels, Q, Dim, Rest...>(coord, resourceViews, distance, Rest{}...);
+    }
+
+public:
+    SamplerAlgorithmFactory() = default;
+    SamplerAlgorithmFactory(TextureFilteringMethods method) : samplerAlgorithmID(method) {}
+
+    template<typename T, glm::length_t NChannels, glm::qualifier Q, std::size_t Dim>
+    glm::vec<NChannels, T, Q> Sample(
+        const TextureCoordinate<Dim>& coord, 
+        const std::vector<ResourceView<Dim>>& resourceViews,
+        double distance) 
+    {
+        return Sample<T, NChannels, Q, Dim, TAlgo...>(coord, resourceViews, distance, TAlgo{}...);
+    }
 };
 
-template<typename T, std::size_t Dim, std::size_t N, typename TFloat, glm::qualifier Q>
-concept Sampler = requires(T sampler)
-{
-    { sampler.AttachResource(std::declval<std::span<TFloat>>(), std::declval<ResourceDescriptor>()) };
-    { sampler.AttachResource(std::declval<const std::vector<std::span<TFloat>>&>(), std::declval<ResourceDescriptor>()) };
-    { sampler.Sample(std::declval<glm::vec<Dim, TFloat, Q>>()) } -> std::same_as<glm::vec<N, TFloat, Q>>;
-};
-
-template<typename T>
-concept Sampler2D = Sampler<T, 2, 4, float, glm::defaultp>;
-
-template<typename T>
-concept Sampler3D = Sampler<T, 3, 4, float, glm::defaultp>;
-
-template<typename T>
-concept Sampler1D = Sampler<T, 1, 4, float, glm::defaultp>;
+using SamplerAlgorithms = SamplerAlgorithmFactory<
+    LinearSamplerAlgorithm,
+    NearestSamplerAlgorithm,
+    CubicSamplerAlgorithm>;

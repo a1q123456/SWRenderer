@@ -4,7 +4,7 @@
 #include "shading/material/simple_vertex_program.h"
 #include "shading/material/blinn_material.h"
 #include "native_window_handle.h"
-
+#include "pixel_format.h"
 
 template<CanvasDrawable TCanvas>
 class SceneController
@@ -36,7 +36,7 @@ public:
     template<CanvasDrawable T>
     SceneController(T&&);
     
-    void CreateBuffer(int pixelFormat) { renderer.CreateBuffer(pixelFormat); }
+    void CreateBuffer(EPixelFormat pixelFormat) { renderer.CreateBuffer(pixelFormat); }
     void SetHWND(NativeWindowHandle hwnd);
 
     void MouseDown();
