@@ -14,7 +14,7 @@ add_executable(swengine WIN32
 "shading/material/phong_material.cc"
 "shading/material/blinn_material.cc"
 "shading/light/point_light.cc"
-"texture-filtering/cubic_convolution_kernels.cc"
+"image-processing/rescaling.cc"
 )
 
 if (WIN32)
@@ -32,7 +32,9 @@ find_package(glm CONFIG REQUIRED)
 target_link_libraries(swengine PRIVATE glm::glm)
 find_package(Stb REQUIRED)
 target_include_directories(swengine PRIVATE Stb_INCLUDE_DIR ${PROJECT_SOURCE_DIR})
-target_compile_options(swengine PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/openmp /std:c++latest>)
+target_compile_options(swengine PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/openmp /std:c++latest> /arch:AVX2)
+find_package(proxy CONFIG REQUIRED)
+target_link_libraries(swengine PRIVATE msft_proxy)
 
 if (NOT WIN32)
     set_target_properties(swengine PROPERTIES

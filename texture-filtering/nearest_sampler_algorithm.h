@@ -6,14 +6,14 @@
 class NearestSamplerAlgorithm
 {
 public:
-    static constexpr TextureFilteringMethods ID = TextureFilteringMethods::Nearest;
+    static constexpr ETextureFilteringMethods ID = ETextureFilteringMethods::Nearest;
 
     template<typename T, glm::length_t NChannels, glm::qualifier Q, std::size_t Dim>
     static glm::vec<NChannels, T, Q> Sample(
-        const TextureCoordinate<Dim>& coord, 
-        const std::vector<ResourceView<Dim>>& resourceViews,
-        double distance)
+        const TextureCoordinate<Dim + 1>& coord, 
+        const std::vector<ResourceView<Dim>>& resourceViews)
     {
-        return resourceViews.front().template Get<T, NChannels, Q>(glm::floor(resourceViews.front().Boundary() * coord));
+        TextureCoordinate<Dim> coordWithoutDistance = coord;
+        return resourceViews.front().template Get<T, NChannels, Q>(glm::floor(resourceViews.front().Boundary() * coordWithoutDistance));
     }
 };

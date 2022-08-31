@@ -170,14 +170,15 @@ class LinearSamplerAlgorithm
 
    
 public:
-    static constexpr TextureFilteringMethods ID = TextureFilteringMethods::Linear; 
+    static constexpr ETextureFilteringMethods ID = ETextureFilteringMethods::Linear; 
 
     template<typename T, glm::length_t NChannels, glm::qualifier Q, std::size_t Dim>
     static glm::vec<NChannels, T, Q> Sample(
-        const TextureCoordinate<Dim>& coord, 
-        const std::vector<ResourceView<Dim>>& resourceViews,
-        double distance)
+        const TextureCoordinate<Dim + 1>& coord, 
+        const std::vector<ResourceView<Dim>>& resourceViews)
     {
+        TextureCoordinate<Dim> coordNoLevel{coord};
+        double distance = coord[Dim];
         double level = 0;
         bool mipmap = resourceViews.size() > 1;
 
@@ -190,7 +191,7 @@ public:
 
         auto boundary = resourceViews[level].Boundary();
 
-        glm::vec<Dim, T, Q> location = coord;
+        glm::vec<Dim, T, Q> location = coordNoLevel;
         location *= boundary;
 
         auto ret = InternalSample<T, NChannels, Q>(resourceViews[mipmapLevel], location, DimWrapper<Dim>{});

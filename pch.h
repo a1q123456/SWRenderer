@@ -31,6 +31,8 @@
 #include <map>
 #include <array>
 #include <string_view>
+#include <execution>
+#include <memory_resource>
 #include <glm/mat4x4.hpp>
 #include <glm/vec4.hpp>
 #include <glm/vec3.hpp>
@@ -39,4 +41,5 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/rotate_vector.hpp>
+#include <proxy/proxy.h>
 

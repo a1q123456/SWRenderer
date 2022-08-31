@@ -6,6 +6,7 @@ std::vector<VertexDataDescriptor> PhongMaterial::GetInput() const noexcept
             {VertexAttributes::Normal, VertexAttributeTypes::Vec3},
             {VertexAttributes::Custom, VertexAttributeTypes::Vec3, "fragPos"}};
 }
+
 PixelFunction PhongMaterial::GetEntry() const noexcept
 {
     return [](PixelProgram *d, const ProgramDataPack &args) -> glm::vec4

@@ -4,6 +4,8 @@
 
 class CubicSamplerAlgorithm
 {
+   
+public:
     enum class EInterpolationMethod
     {
         HermiteSpline,
@@ -153,9 +155,10 @@ class CubicSamplerAlgorithm
         DimWrapper<3>)
     {
         auto boundary = resourceView.Boundary();
-        float xMix = std::fmod(location.x, 1.0);
-        float yMix = std::fmod(location.y, 1.0);
-        float zMix = std::fmod(location.z, 1.0);
+
+        float xMix = location.x - static_cast<int>(location.x);
+        float yMix = location.y - static_cast<int>(location.y);
+        float zMix = location.z - static_cast<int>(location.z);
 
         int ix1 = location.x;
         int ix2 = std::min(ix1 + 1, boundary[0]);
@@ -290,17 +293,15 @@ class CubicSamplerAlgorithm
         float xMix = location.x - static_cast<int>(location.x);
         float yMix = location.y - static_cast<int>(location.y);
 
-        int ix1 = std::clamp<int>(location.x, 0, boundary[0] - 1);
-        int ix2 = std::clamp<int>(ix1 + 1, 0, boundary[0] - 1);
-        int ix3 = std::clamp<int>(ix1 + 2, 0, boundary[0] - 1);
-        int ix0 = std::clamp<int>(ix1 - 1, 0, boundary[0] - 1);
+        int ix1 = std::clamp<int>(location.x, 0, boundary.x - 1);
+        int ix2 = std::clamp<int>(ix1 + 1, 0, boundary.x - 1);
+        int ix3 = std::clamp<int>(ix1 + 2, 0, boundary.x - 1);
+        int ix0 = std::clamp<int>(ix1 - 1, 0, boundary.x - 1);
 
-        int iy1 = std::clamp<int>(location.y, 0, boundary[0] - 1);
-        int iy2 = std::clamp<int>(iy1 + 1, 0, boundary[1] - 1);
-        int iy3 = std::clamp<int>(iy1 + 2, 0, boundary[1] - 1);
-        int iy0 = std::clamp<int>(iy1 - 1, 0, boundary[1] - 1);
-
-        
+        int iy1 = std::clamp<int>(location.y, 0, boundary.y - 1);
+        int iy2 = std::clamp<int>(iy1 + 1, 0, boundary.y - 1);
+        int iy3 = std::clamp<int>(iy1 + 2, 0, boundary.y - 1);
+        int iy0 = std::clamp<int>(iy1 - 1, 0, boundary.y - 1);
 
         return Interpolate2D<T, NChannels, Q>(Interpolate2DParams<glm::vec<NChannels, T, Q>>{
             std::array<glm::vec<NChannels, T, Q>, 4>{
@@ -329,16 +330,16 @@ class CubicSamplerAlgorithm
             }
         }, xMix, yMix);
     }
-   
-public:
-    static constexpr TextureFilteringMethods ID = TextureFilteringMethods::Cubic; 
+
+    static constexpr ETextureFilteringMethods ID = ETextureFilteringMethods::Cubic; 
 
     template<typename T, glm::length_t NChannels, glm::qualifier Q, std::size_t Dim>
     static glm::vec<NChannels, T, Q> Sample(
-        const TextureCoordinate<Dim>& coord, 
-        const std::vector<ResourceView<Dim>>& resourceViews,
-        double distance)
+        const TextureCoordinate<Dim + 1>& coord, 
+        const std::vector<ResourceView<Dim>>& resourceViews)
     {
+        TextureCoordinate<Dim> coordNoLevel{coord};
+        double distance = coord[Dim];
         double level = 0;
         bool mipmap = resourceViews.size() > 1;
 
@@ -347,20 +348,21 @@ public:
             level = glm::clamp(distance, 0.0, 1.0) * (resourceViews.size() - 1);
         }
         int mipmapLevel = level;
-        double mipmapMix = std::fmod(level, 1.0);
+        double mipmapMix = level - mipmapLevel;
 
         auto boundary = resourceViews[level].Boundary();
 
-        glm::vec<Dim, T, Q> location = coord * boundary;
+        glm::vec<Dim, T, Q> location = coordNoLevel * boundary;
 
         auto ret = InternalSample<T, NChannels, Q>(resourceViews[mipmapLevel], location, DimWrapper<Dim>{});
-        // if (mipmap)
-        // {
-        //     return glm::lerp(ret, InternalSample<T, NChannels, Q>(resourceViews[mipmapLevel + 1], location, DimWrapper<Dim>{}), mipmapMix);
-        // }
-        // else
-        // {
+        if (mipmap)
+        {
+            glm::vec<Dim, T, Q> locationMipmap = coordNoLevel * resourceViews[mipmapLevel + 1].Boundary();
+            return glm::lerp(ret, InternalSample<T, NChannels, Q>(resourceViews[mipmapLevel + 1], locationMipmap, DimWrapper<Dim>{}), static_cast<T>(mipmapMix));
+        }
+        else
+        {
             return ret;
-        // }
+        }
     }
 };

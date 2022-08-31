@@ -3,7 +3,7 @@
     "name": "swrenderer",
     "version": "1.0.0",
     "dependencies": [
-      "glm", "stb"
+      "glm", "stb", "proxy"
     ]
   }
   

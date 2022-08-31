@@ -18,15 +18,20 @@ enum class EResourceDataType
     Int32,
     UInt32,
     Int64,
-    UInt64
+    UInt64,
+    DataTypesCount
 };
 
-std::size_t sizeOf(EResourceDataType dataType);
+constexpr std::size_t sizeOf(EResourceDataType dataType);
 template<EResourceDataType dataType>
-std::size_t sizeOf();
+constexpr std::size_t sizeOf();
 
 template<std::size_t Dim>
 using ResourceCoordinate = TextureBoundary<Dim>;
+
+using ResourceCoordinate1D = ResourceCoordinate<1>;
+using ResourceCoordinate2D = ResourceCoordinate<2>;
+using ResourceCoordinate3D = ResourceCoordinate<3>;
 
 template<typename TAllocator>
 class BasicResource
@@ -34,9 +39,10 @@ class BasicResource
     template<std::size_t Dim>
     friend class ResourceView;
 private:
-    std::uint8_t* data;
+    std::uint8_t* data = nullptr;
     std::size_t sizeInBytes = 0;
     TAllocator allocator;
+    bool ownData = false;
 
 public:
     BasicResource() = default;
@@ -44,18 +50,24 @@ public:
     BasicResource(BasicResource&&);
     BasicResource(const std::uint8_t* data, std::size_t sizeInBytes, TAllocator allocator = {});
     BasicResource(std::size_t sizeInBytes, TAllocator allocator = {});
+    static BasicResource Attach(std::uint8_t* data, std::size_t sizeInBytes);
 
     BasicResource& operator=(const BasicResource&) = delete;
     BasicResource& operator=(BasicResource&&);
 
-    std::uint8_t* Data() const
+    const std::uint8_t* Data() const
+    {
+        return data;
+    }
+
+    std::uint8_t* Data()
     {
         return data;
     }
 
     ~BasicResource()
     {
-        if (data == nullptr)
+        if (!ownData)
         {
             return;
         }
@@ -86,11 +98,10 @@ private:
      * @return T& 
      */
     template<typename T, glm::length_t NChannels, glm::qualifier Q>
-    glm::vec<NChannels, T, Q> GetItem(std::size_t offset) const;
+    glm::vec<NChannels, T, Q> GetItem(std::size_t offset) const noexcept;
 
-    template<typename T>
-    T ConvertType(std::uint8_t* pData) const noexcept;
-
+    template<typename T, glm::length_t NChannels, glm::qualifier Q>
+    void SetItem(std::size_t offset, const glm::vec<NChannels, T, Q>& val) noexcept;
 public:
     ResourceView() = default;
     ResourceView(Resource* resource, std::size_t start, EResourceDataType dataType, int channels, std::size_t lineSize, const TextureBoundary<Dim>& boundary);
@@ -112,6 +123,23 @@ public:
         }
         offset += coord[0] * sizeOf(dataType) * channels;
         return GetItem<T, NChannels, Q>(offset);
+    }
+
+    template<typename T, glm::length_t NChannels, glm::qualifier Q>
+    void Set(const ResourceCoordinate<Dim>& coord, const glm::vec<NChannels, T, Q>& val)
+    {
+        std::uint32_t offset = 0;
+        if constexpr (Dim > 1)
+        {
+            offset = coord[1];
+            for (int i = 2; i < Dim; i++)
+            {
+                offset *= coord[i];
+            }
+            offset *= lineSize;
+        }
+        offset += coord[0] * sizeOf(dataType) * channels;
+        SetItem<T, NChannels, Q>(offset, val);
     }
 
     TextureBoundary<Dim> Boundary() const noexcept

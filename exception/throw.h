@@ -5,6 +5,7 @@ enum class SWRErrorCode
     MisalignedMemoryAccess,
     TypeMismatch,
     IndexOutOfRange,
+    InvalidEnum
 };
 
 

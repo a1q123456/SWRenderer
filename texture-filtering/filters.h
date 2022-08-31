@@ -2,8 +2,11 @@
 
 template<size_t Dim>
 using TextureCoordinate = glm::vec<Dim, float, glm::qualifier::highp>;
+using Texture1DCoordinate = TextureCoordinate<2>;
+using Texture2DCoordinate = TextureCoordinate<3>;
+using Texture3DCoordinate = TextureCoordinate<4>;
 
-enum class TextureFilteringMethods
+enum class ETextureFilteringMethods
 {
     Nearest,
     Linear,

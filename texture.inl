@@ -6,11 +6,10 @@ Texture<N>::Texture(Texture&& texture):
     resource(std::move(texture.resource)),
     resourceViews(std::move(texture.resourceViews)),
     desc(std::move(texture.desc)),
-    samplerAlgorithm(std::move(texture.samplerAlgorithm)),
+    filterMethod(filterMethod),
     boundaries(std::move(boundaries))
 {
     texture.desc = {};
-    samplerAlgorithm = {};
 }
 
 template<std::size_t N>
@@ -23,14 +22,14 @@ Texture<N>& Texture<N>::operator=(Texture&& texture)
         rv.Rebind(&resource);
     }
     desc = std::move(texture.desc);
-    samplerAlgorithm = std::move(texture.samplerAlgorithm);
+    filterMethod = texture.filterMethod;
     boundaries = std::move(boundaries);
     return *this;
 }
 
 template<std::size_t N>
-Texture<N>::Texture(const std::vector<std::span<std::uint8_t>>& data, const TextureDesc<N>& desc, TextureFilteringMethods filterMethod, int levelsToGenerate) :
-    samplerAlgorithm(filterMethod)
+Texture<N>::Texture(const std::vector<std::span<std::uint8_t>>& data, const TextureDesc<N>& desc, ETextureFilteringMethods filterMethod, int levelsToGenerate) :
+    filterMethod(filterMethod)
 {
     auto totalLevels = desc.levelsCount + levelsToGenerate;
 
@@ -66,17 +65,17 @@ Texture<N>::Texture(const std::vector<std::span<std::uint8_t>>& data, const Text
         size /= den;
         sumSize += size;
         sizes[i] = size;
-        lineSizes[i] = lineSizes[i - 1] / den;
+        lineSizes[i] = lineSizes[i - 1] / 2;
         
         boundaries[i] = boundaries[i - 1];
-        boundaries[i] /= den;
+        boundaries[i] /= 2;
     }
 
     resource = Resource{sumSize};
     resourceViews.reserve(totalLevels);
 
     LoadMipmap(data, desc, sizes, offsets, lineSizes, boundaries);
-    GenerateMipmap(data, desc, sizes, offsets, lineSizes, boundaries, desc.levelsCount, levelsToGenerate);
+    GenerateMipmap(data, desc, sizes, offsets, lineSizes, boundaries, desc.levelsCount - 1, levelsToGenerate);
     this->desc = desc;
     this->desc.levelsCount = totalLevels;
     this->boundaries = std::move(boundaries);
@@ -94,11 +93,24 @@ void Texture<N>::GenerateMipmap(
     int toLevel)
 {
     auto pixDesc = getPixelDesc(desc.pixelFormat);
-    for (int i = fromLevel; i < toLevel; i++)
+    for (int i = fromLevel + 1; i < toLevel; i++)
     {
-        // TODO
-        // rescaleImage(data[fromLevel], std::span{resource.Data() + offsets[i], sizes[i]}, boundaries[fromLevel], boundaries[i]);
-        // resourceViews.emplace_back(resource, offsets[i], desc.elementType, pixDesc, lineSizes[i], boundaries[i]);
+        if constexpr (N == 2)
+        {
+            rescaleImage2D(
+                ETextureFilteringMethods::Cubic, 
+                data[fromLevel], 
+                desc.pixelFormat,
+                boundaries[fromLevel].x,
+                boundaries[fromLevel].y,
+                lineSizes[fromLevel],
+                boundaries[i].x,
+                boundaries[i].y,
+                lineSizes[i],
+                std::span{resource.Data() + offsets[i], sizes[i]}
+                );
+        }
+        resourceViews.emplace_back(&resource, offsets[i], desc.elementType, pixDesc->nbChannels, lineSizes[i], boundaries[i]);
     }
 }
 

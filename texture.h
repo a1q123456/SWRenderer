@@ -41,9 +41,9 @@ private:
     Resource resource;
     std::vector<ResourceView<N>> resourceViews;
     TextureDesc<N> desc;
-    SamplerAlgorithms samplerAlgorithm;
+    ETextureFilteringMethods filterMethod;
+    // pro::proxy<SamplerFacade> samplerAlgorithm;
     std::vector<TextureBoundary<N>> boundaries;
-    double distance = 0;
     
     void LoadMipmap(
         const std::vector<std::span<std::uint8_t>>& data, 
@@ -65,7 +65,7 @@ public:
     Texture() = default;
     Texture(const Texture&) = delete;
     Texture(Texture&&);
-    Texture(const std::vector<std::span<std::uint8_t>>& data, const TextureDesc<N>& desc, TextureFilteringMethods filterMethod, int nbLevelToGenerate = -1);
+    Texture(const std::vector<std::span<std::uint8_t>>& data, const TextureDesc<N>& desc, ETextureFilteringMethods filterMethod, int nbLevelToGenerate = -1);
 
     Texture& operator=(const Texture&) = delete;
     Texture& operator=(Texture&&);
@@ -73,14 +73,17 @@ public:
     const TextureDesc<N>& GetDesc() const noexcept;
 
     template<typename T, glm::length_t NChannels, glm::qualifier Q = glm::defaultp>
-    glm::vec<NChannels, T, Q> Sample(const TextureCoordinate<N>& coord)
+    glm::vec<NChannels, T, Q> Sample(const TextureCoordinate<N + 1>& coord)
     {
-        return samplerAlgorithm.template Sample<T, NChannels, Q, N>(coord, resourceViews, distance);
+        static auto sampler = CreateSampler<T, NChannels, Q, N>(filterMethod);
+        return sampler.template invoke<SamplerDispatchable<T, NChannels, Q, N>>(coord, resourceViews);
     }
 
-    void SetDistance(double distance)
+    template<typename T, glm::length_t NChannels, glm::qualifier Q = glm::defaultp>
+    glm::vec<NChannels, T, Q> Sample(const TextureCoordinate<N>& coord)
     {
-        this->distance = distance;
+        static auto sampler = CreateSampler<T, NChannels, Q, N>(filterMethod);
+        return sampler.template invoke<SamplerDispatchable<T, NChannels, Q, N>>(TextureCoordinate<N + 1>{coord, 0}, resourceViews);
     }
 
     template<typename T, glm::length_t NChannels, glm::qualifier Q = glm::defaultp>

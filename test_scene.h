@@ -7,7 +7,6 @@
 #include "native_window_handle.h"
 #include "pixel_format.h"
 #include "texture.h"
-#include <iostream>
 
 
 template<CanvasDrawable TCanvas>
@@ -39,8 +38,8 @@ public:
             TextureDesc2D{
                 1, Texture2DBoundary{textureW, textureH}, textureW * textureChannels, EResourceDataType::UInt8, textureChannels == 3 ? EPixelFormat::RGB_U8 : EPixelFormat::RGBA_U8
             },
-            TextureFilteringMethods::Linear,
-            0
+            ETextureFilteringMethods::Cubic,
+            3
         };
 
         auto start = std::chrono::steady_clock::now();
@@ -48,17 +47,32 @@ public:
         {
             for (int x = 0; x < width; x++)
             {
-                auto color = texture.Sample<float, 4>({static_cast<float>(x) / width, 1.0 - static_cast<float>(y) / height});
+                auto color = texture.Sample<float, 4>({static_cast<float>(x) / width, static_cast<float>(height - y - 1) / height, 0.2});
                 // glm::vec4 color{255 * (double)y / height, 255 * (double)x / width, 0, 0};
-                this->canvas.Buffer()[y * width * 4 + x * 4 + 0] = std::clamp<float>(color.b, 0, 255);
-                this->canvas.Buffer()[y * width * 4 + x * 4 + 1] = std::clamp<float>(color.g, 0, 255);
-                this->canvas.Buffer()[y * width * 4 + x * 4 + 2] = std::clamp<float>(color.r, 0, 255);
+                this->canvas.Buffer()[y * width * 4 + x * 4 + 0] = std::clamp<float>(color.b, 0, 1) * std::numeric_limits<std::uint8_t>::max();
+                this->canvas.Buffer()[y * width * 4 + x * 4 + 1] = std::clamp<float>(color.g, 0, 1) * std::numeric_limits<std::uint8_t>::max();
+                this->canvas.Buffer()[y * width * 4 + x * 4 + 2] = std::clamp<float>(color.r, 0, 1) * std::numeric_limits<std::uint8_t>::max();
             }
         }
         auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
         std::stringstream ss;
         ss << ms << "ms" << std::endl;
         OutputDebugStringA(ss.str().c_str());
+
+        // std::uint8_t testData[]{10, 30, 40, 0, 5, 100, 2, 1, 14, 200};
+        // std::uint8_t testOutput[22]{0};
+        // std::span<uint8_t> testOutputSpan{testOutput};
+
+        // rescaleImage1D(
+        //     ETextureFilteringMethods::Cubic, 
+        //     testData, 
+        //     EPixelFormat::R_U8, 
+        //     sizeof(testData), 
+        //     sizeof(testOutput), 
+        //     testOutputSpan);
+
+        // OutputDebugStringA(ss.str().c_str());
+
     }
     
     void CreateBuffer(EPixelFormat pixelFormat) { }

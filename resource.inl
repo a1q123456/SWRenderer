@@ -1,5 +1,37 @@
 #include "exception/throw.h"
 
+
+#define _resource_impl_convertArray(pSrc, pDst, size, TSrc, TDst) \
+{ \
+    for (int i = 0; i < size; i++) \
+    { \
+        pDst[i] = reinterpret_cast<const TSrc*>(pSrc)[i] / static_cast<TDst>(std::numeric_limits<TSrc>::max()); \
+    } \
+}
+
+#define _resource_impl_convertVector(pSrc, pDst, size, TSrc, TDst) \
+{ \
+    for (int i = 0; i < size; i++) \
+    { \
+        pDst[i] = std::clamp<TDst>(pSrc[i] * static_cast<TSrc>(std::numeric_limits<TDst>::max()), \
+            std::numeric_limits<TDst>::min(),  \
+            std::numeric_limits<TDst>::max() \
+        ); \
+    } \
+}
+
+#define _resource_impl_convertVector_unsinged(pSrc, pDst, size, TSrc, TDst) \
+{ \
+    for (int i = 0; i < size; i++) \
+    { \
+        auto val = pSrc[i] * static_cast<TSrc>(std::numeric_limits<TDst>::max());\
+        pDst[i] = std::clamp<TDst>(val < 0 ? 0 : val, \
+            std::numeric_limits<TDst>::min(),  \
+            std::numeric_limits<TDst>::max() \
+        ); \
+    } \
+}
+
 namespace _resource_impl
 {
     template<EResourceDataType dataType>
@@ -34,37 +66,119 @@ namespace _resource_impl
     
     template<>
     struct SizeInfo<EResourceDataType::UInt64> { static constexpr std::size_t value = sizeof(std::uint64_t); };
+    
+    constexpr const std::size_t dataTypeSize[static_cast<int>(EResourceDataType::DataTypesCount)]
+    {
+        sizeof(float),
+        sizeof(double),
+        sizeof(std::int8_t),
+        sizeof(std::uint8_t),
+        sizeof(std::int8_t),
+        sizeof(std::uint8_t),
+        sizeof(std::int8_t),
+        sizeof(std::uint8_t),
+        sizeof(std::int8_t),
+        sizeof(std::uint8_t)
+    };
+
+    template<typename T>
+    void ConvertToVector(EResourceDataType dataType, const std::uint8_t* pData, int nChannels, T* out) noexcept
+    {
+        switch (dataType)
+        {
+        case EResourceDataType::UInt8:
+            _resource_impl_convertArray(pData, out, nChannels, std::uint8_t, T);
+            return;
+        case EResourceDataType::UInt16:
+            _resource_impl_convertArray(pData, out, nChannels, std::uint16_t, T);
+            return;
+        case EResourceDataType::UInt32:
+            _resource_impl_convertArray(pData, out, nChannels, std::uint32_t, T);
+            return;
+        case EResourceDataType::UInt64:
+            _resource_impl_convertArray(pData, out, nChannels, std::uint64_t, T);
+            return;
+        case EResourceDataType::Int8:
+            _resource_impl_convertArray(pData, out, nChannels, std::int8_t, T);
+            return;
+        case EResourceDataType::Int16:
+            _resource_impl_convertArray(pData, out, nChannels, std::int16_t, T);
+            return;
+        case EResourceDataType::Int32:
+            _resource_impl_convertArray(pData, out, nChannels, std::int32_t, T);
+            return;
+        case EResourceDataType::Int64:
+            _resource_impl_convertArray(pData, out, nChannels, std::int64_t, T);
+            return;
+        case EResourceDataType::Float:
+            _resource_impl_convertArray(pData, out, nChannels, float, T);
+            return;
+        case EResourceDataType::Double:
+            _resource_impl_convertArray(pData, out, nChannels, double, T);
+            return;
+        }
+        return;
+    }
+
+    template<typename T>
+    void ConvertToMemory(EResourceDataType dataType, const T* pSrc, int nChannels, std::uint8_t* pDst) noexcept
+    {
+        switch (dataType)
+        {
+        case EResourceDataType::UInt8: 
+            _resource_impl_convertVector_unsinged(pSrc, pDst, nChannels, T, std::uint8_t);
+            return;
+        case EResourceDataType::UInt16:
+            _resource_impl_convertVector_unsinged(pSrc, pDst, nChannels, T, std::uint16_t);
+            return;
+        case EResourceDataType::UInt32:
+            _resource_impl_convertVector_unsinged(pSrc, pDst, nChannels, T, std::uint32_t);
+            return;
+        case EResourceDataType::UInt64:
+            _resource_impl_convertVector_unsinged(pSrc, pDst, nChannels, T, std::uint64_t);
+            return;
+        case EResourceDataType::Int8:
+            _resource_impl_convertVector(pSrc, pDst, nChannels, T, std::int8_t);
+            return;
+        case EResourceDataType::Int16:
+            _resource_impl_convertVector(pSrc, pDst, nChannels, T, std::int16_t);
+            return;
+        case EResourceDataType::Int32:
+            _resource_impl_convertVector(pSrc, pDst, nChannels, T, std::int32_t);
+            return;
+        case EResourceDataType::Int64:
+            _resource_impl_convertVector(pSrc, pDst, nChannels, T, std::int64_t);
+            return;
+        case EResourceDataType::Float:
+            _resource_impl_convertVector(pSrc, pDst, nChannels, T, float);
+            return;
+        case EResourceDataType::Double:
+            _resource_impl_convertVector(pSrc, pDst, nChannels, T, double);
+            return;
+        }
+        return;
+    }
 }
 
 template<EResourceDataType dataType>
-inline std::size_t sizeOf()
+constexpr inline std::size_t sizeOf()
 {
     return _resource_impl::SizeInfo<dataType>::value;
 }
 
-inline std::size_t sizeOf(EResourceDataType dataType)
+constexpr inline std::size_t sizeOf(EResourceDataType dataType)
 {
-    static std::unordered_map<EResourceDataType, std::size_t> dataTypeSize
-    {
-        { EResourceDataType::Float, sizeof(float) },
-        { EResourceDataType::Double, sizeof(double) },
-        { EResourceDataType::Int8, sizeof(std::int8_t) },
-        { EResourceDataType::UInt8, sizeof(std::uint8_t) },
-        { EResourceDataType::Int16, sizeof(std::int8_t) },
-        { EResourceDataType::UInt16, sizeof(std::uint8_t) },
-        { EResourceDataType::Int32, sizeof(std::int8_t) },
-        { EResourceDataType::UInt32, sizeof(std::uint8_t) },
-        { EResourceDataType::Int64, sizeof(std::int8_t) },
-        { EResourceDataType::UInt64, sizeof(std::uint8_t) },
-    };
-
-    return dataTypeSize.at(dataType);
+    return _resource_impl::dataTypeSize[static_cast<int>(dataType)];
 }
 
 template<typename TAllocator>
-BasicResource<TAllocator>::BasicResource(BasicResource&& resource) :
-    allocator(std::move(resource.allocator))
+BasicResource<TAllocator>::BasicResource(BasicResource&& resource)
 {
+    if (resource.ownData && allocator != resource.allocator)
+    {
+        allocator = std::move(resource.allocator);
+    }
+    ownData = resource.ownData;
     data = resource.data;
     sizeInBytes = resource.sizeInBytes;
     resource.data = nullptr;
@@ -74,7 +188,11 @@ BasicResource<TAllocator>::BasicResource(BasicResource&& resource) :
 template<typename TAllocator>
 BasicResource<TAllocator>& BasicResource<TAllocator>::operator=(BasicResource&& resource)
 {
-    allocator = std::move(resource.allocator);
+    if (resource.ownData && allocator != resource.allocator)
+    {
+        allocator = std::move(resource.allocator);
+    }
+    ownData = resource.ownData;
     data = resource.data;
     resource.data = nullptr;
     sizeInBytes = resource.sizeInBytes;
@@ -94,9 +212,22 @@ BasicResource<TAllocator>::BasicResource(
 template<typename TAllocator>
 BasicResource<TAllocator>::BasicResource(
     std::size_t sizeInBytes,
-    TAllocator allocator): sizeInBytes(sizeInBytes), allocator(std::move(allocator))
+    TAllocator allocator): 
+    sizeInBytes(sizeInBytes), 
+    allocator(std::move(allocator))
 {
-    this->data = this->allocator.allocate(sizeInBytes);
+    data = this->allocator.allocate(sizeInBytes);
+    ownData = true;
+}
+
+template<typename TAllocator>
+BasicResource<TAllocator> BasicResource<TAllocator>::Attach(std::uint8_t* data, std::size_t sizeInBytes)
+{
+    BasicResource<TAllocator> ret;
+    ret.ownData = false;
+    ret.data = data;
+    ret.sizeInBytes = sizeInBytes;
+    return ret;
 }
 
 template<std::size_t Dim>
@@ -121,7 +252,6 @@ ResourceView<Dim>::ResourceView(
     }
 }
 
-
 template<std::size_t Dim>
 void ResourceView<Dim>::Rebind(Resource* newResource)
 {
@@ -130,54 +260,23 @@ void ResourceView<Dim>::Rebind(Resource* newResource)
 
 template<std::size_t Dim>
 template<typename T, glm::length_t NChannels, glm::qualifier Q>
-glm::vec<NChannels, T, Q> ResourceView<Dim>::GetItem(std::size_t offset) const
+glm::vec<NChannels, T, Q> ResourceView<Dim>::GetItem(std::size_t offset) const noexcept
 {
-#if defined(DEBUG)
-    if (offset >= resource->sizeInBytes)
-    {
-        ThrowException(SWRErrorCode::IndexOutOfRange);
-    }
-    if (offset % sizeOf(dataType) != 0)
-    {
-        ThrowException(SWRErrorCode::MisalignedMemoryAccess);
-    }
-#endif
-
+    auto minChannels = std::min(NChannels, channels);
     glm::vec<NChannels, T, Q> ret{0};
-    for (int i = 0; i < std::min(NChannels, channels); i++)
-    {
-        ret[i] = ConvertType<T>((resource->data + offset + i));
-    }
-
+    auto pDst = &ret.x;
+    auto pSrc = resource->data + start + offset;
+    _resource_impl::ConvertToVector<T>(dataType, pSrc, minChannels, pDst);
     return ret;
 }
 
 template<std::size_t Dim>
-template<typename T>
-T ResourceView<Dim>::ConvertType(std::uint8_t* pData) const noexcept
+template<typename T, glm::length_t NChannels, glm::qualifier Q>
+void ResourceView<Dim>::SetItem(std::size_t offset, const glm::vec<NChannels, T, Q>& val) noexcept
 {
-    switch (dataType)
-    {
-    case EResourceDataType::UInt8:
-        return *pData;
-    case EResourceDataType::UInt16:
-        return *reinterpret_cast<std::uint16_t*>(pData);
-    case EResourceDataType::UInt32:
-        return *reinterpret_cast<std::uint32_t*>(pData);
-    case EResourceDataType::UInt64:
-        return *reinterpret_cast<std::uint64_t*>(pData);
-    case EResourceDataType::Int8:
-        return *reinterpret_cast<std::int8_t*>(pData);
-    case EResourceDataType::Int16:
-        return *reinterpret_cast<std::int16_t*>(pData);
-    case EResourceDataType::Int32:
-        return *reinterpret_cast<std::int32_t*>(pData);
-    case EResourceDataType::Int64:
-        return *reinterpret_cast<std::int64_t*>(pData);
-    case EResourceDataType::Float:
-        return *reinterpret_cast<float*>(pData);
-    case EResourceDataType::Double:
-        return *reinterpret_cast<double*>(pData);
-    }
-    return 0;
+    auto minChannels = std::min(NChannels, channels);
+    auto pSrc = &val.x;
+    auto pDst = resource->data + start + offset;
+    _resource_impl::ConvertToMemory<T>(dataType, pSrc, minChannels, pDst);
+    return;
 }
