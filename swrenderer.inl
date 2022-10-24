@@ -130,19 +130,18 @@ struct Triangle
 };
 
 template <CanvasDrawable Canvas>
-ProgramContext SWRenderer<Canvas>::LinkProgram(VertexProgram &vp, PixelProgram &pp) noexcept
+ProgramContext SWRenderer<Canvas>::LinkProgram(const pro::proxy<VertexShaderFacade>& vp,
+                                                const pro::proxy<PixelShaderFacade>& pp) noexcept
 {
     ProgramContext ctx;
-    ctx.vertexProgram = &vp;
-    ctx.pixelProgram = &pp;
+    ctx.vertexProgram = std::move(vp);
+    ctx.pixelProgram = std::move(pp);
 
-    ctx.vsInputDesc = ctx.vertexProgram->GetInput();
-    ctx.vsOutputDesc = ctx.vertexProgram->GetOutput();
-    ctx.psInputDesc = ctx.pixelProgram->GetInput();
+    ctx.vsInputDesc = vp.invoke<VertexShaderInputDefinitionDispatchable>();
+    ctx.vsOutputDesc = vp.invoke<VertexShaderOutputDefinitionDispatchable>();
+    ctx.psInputDesc = pp.invoke<PixelShaderInputDefinitionDispatchable>();
 
     ctx.inputVertexAttributes = GetVertexAttributeMask(ctx.vsInputDesc);
-    ctx.vertexEntry = ctx.vertexProgram->GetEntry();
-    ctx.pixelEntry = ctx.pixelProgram->GetEntry();
 
     auto vsOutputMask = GetVertexAttributeMask(ctx.vsOutputDesc);
 
@@ -283,7 +282,7 @@ void SWRenderer<Canvas>::Draw(float timeElapsed)
                     vsInput[j].SetData(0, k, d.attr, modelData->GetVertexData(i + j, k, d.attr));
                 }
             }
-            vsOutput[j] = programCtx->vertexEntry(programCtx->vertexProgram, vsInput[j]);
+            vsOutput[j] = programCtx->vertexProgram.invoke<VertexShaderOutputDispatchable>(vsInput[j]);
             for (int i = 0; i < (int)programCtx->vsOutputPosType; i++)
             {
                 v[j][i] = vsOutput[j].GetData(0, i, programCtx->vsOutputPosIdx);
@@ -438,7 +437,7 @@ void SWRenderer<Canvas>::Draw(float timeElapsed)
                     }
                 }
 
-                auto sampleColor = programCtx->pixelEntry(programCtx->pixelProgram, psInput);
+                auto sampleColor = programCtx->pixelProgram.invoke<PixelShaderOutputColorDispatchable>(psInput);
                 bool hasRendered = false;
 
                 for (auto sampleIndex : samplesInTriangle)

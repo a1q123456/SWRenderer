@@ -126,7 +126,7 @@ void Texture<N>::LoadMipmap(
     auto pixDesc = getPixelDesc(desc.pixelFormat);
     for (int i = 0; i < desc.levelsCount; i++)
     {
-        memcpy_s(resource.Data() + offsets[i], sizes[i], data[i].data(), data[i].size());
+        memcpy(resource.Data() + offsets[i], data[i].data(), data[i].size());
         resourceViews.emplace_back(&resource, offsets[i], desc.elementType, pixDesc->nbChannels, lineSizes[i], boundaries[i]);
     }
 }

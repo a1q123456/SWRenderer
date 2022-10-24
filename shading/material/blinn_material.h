@@ -1,7 +1,7 @@
 #pragma once
 #include "shading/pixel_program.h"
 
-class BlinnMaterial : public PixelProgram
+class BlinnMaterial
 {
     std::vector<LightEntry> lightEntry;
     std::uint8_t *textureData = nullptr;
@@ -23,7 +23,7 @@ public:
         this->specularStrength = strength;
     }
     void SetViewPosition(const glm::vec3 &pos) noexcept { cameraPos = pos; }
-    std::vector<VertexDataDescriptor> GetInput() const noexcept override;
-    PixelFunction GetEntry() const noexcept override;
-    void UseLights(const std::vector<Light *> &lights) noexcept override;
+    std::vector<VertexDataDescriptor> GetInputDefinition() const noexcept;
+    void UseLights(const std::vector<Light *> &lights) noexcept;
+    glm::vec4 GetPixelColor(const ProgramDataPack& args) const noexcept;
 };

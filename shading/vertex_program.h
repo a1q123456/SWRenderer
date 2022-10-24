@@ -2,14 +2,37 @@
 #include "model/vertex.h"
 #include "data_pack.h"
 
-class VertexProgram;
-using TVertexFunction = ProgramDataPack(VertexProgram* self, const ProgramDataPack& args);
-using VertexFunction = TVertexFunction*;
-
-class VertexProgram
+struct VertexShaderOutputDispatchable : pro::dispatch<ProgramDataPack(const ProgramDataPack& args)>
 {
-public:
-    virtual const std::vector<VertexDataDescriptor>& GetInput() const noexcept = 0;
-    virtual const std::vector<VertexDataDescriptor>& GetOutput() const noexcept = 0;
-    virtual VertexFunction GetEntry() const noexcept = 0;
+    template <class TSelf>
+    ProgramDataPack operator()(const TSelf& self, const ProgramDataPack& args) const noexcept
+    {
+        return self.GetOutput(args);
+    }
+};
+
+struct VertexShaderInputDefinitionDispatchable : pro::dispatch<const std::vector<VertexDataDescriptor>&()>
+{
+    template <class TSelf>
+    ProgramDataPack operator()(const TSelf& self) const noexcept
+    {
+        return self.GetInputDefinition();
+    }
+};
+
+struct VertexShaderOutputDefinitionDispatchable : pro::dispatch<const std::vector<VertexDataDescriptor>&()>
+{
+    template <class TSelf>
+    ProgramDataPack operator()(const TSelf& self) const noexcept
+    {
+        return self.GetOutputDefinition();
+    }
+};
+
+struct VertexShaderFacade : pro::facade<
+    VertexShaderInputDefinitionDispatchable,
+    VertexShaderOutputDefinitionDispatchable,
+    VertexShaderOutputDispatchable>
+{
+
 };

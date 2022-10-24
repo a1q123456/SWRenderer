@@ -24,11 +24,9 @@ struct ProgramContext
     std::vector<VertexDataDescriptor> psInputDesc;
 
     uint32_t inputVertexAttributes;
-    VertexFunction vertexEntry;
-    PixelFunction pixelEntry;
 
-    VertexProgram *vertexProgram = nullptr;
-    PixelProgram *pixelProgram = nullptr;
+    pro::proxy<VertexShaderFacade> vertexProgram;
+    pro::proxy<PixelShaderFacade> pixelProgram;
 
     bool vsOutputsUv = false;
     bool vsOutputsColor = false;
@@ -58,7 +56,9 @@ class SWRenderer
 
     std::list<float> stats;
 public:
-    static ProgramContext LinkProgram(VertexProgram &vp, PixelProgram &pp) noexcept;
+    static ProgramContext LinkProgram(
+        const pro::proxy<VertexShaderFacade>& vp,
+        const pro::proxy<PixelShaderFacade>& pp) noexcept;
 
     void CreateBuffer(EPixelFormat pixelFormat);
     template<CanvasDrawable T>

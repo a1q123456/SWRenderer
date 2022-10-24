@@ -6,7 +6,6 @@ add_executable(swengine WIN32
 "main.cc" 
 "stbi.cc"
 "pixel_format.cc"
-"raytracing_renderer.cc"
 "headless_window.cc"
 "headless_canvas.cc"
 "model/model_data.cc" 
@@ -32,7 +31,7 @@ find_package(glm CONFIG REQUIRED)
 target_link_libraries(swengine PRIVATE glm::glm)
 find_package(Stb REQUIRED)
 target_include_directories(swengine PRIVATE Stb_INCLUDE_DIR ${PROJECT_SOURCE_DIR})
-target_compile_options(swengine PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/openmp /std:c++latest> /arch:AVX2)
+target_compile_options(swengine PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/openmp /std:c++latest>)
 find_package(proxy CONFIG REQUIRED)
 target_link_libraries(swengine PRIVATE msft_proxy)
 

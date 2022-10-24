@@ -48,7 +48,7 @@ void RayTracingRenderer::Render()
     //                     {
     //                         return a + sample.intensity;
     //                     });
-                        
+
 
     //                 }
     //             }

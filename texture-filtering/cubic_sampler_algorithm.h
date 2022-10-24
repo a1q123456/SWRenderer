@@ -161,123 +161,123 @@ public:
         float zMix = location.z - static_cast<int>(location.z);
 
         int ix1 = location.x;
-        int ix2 = std::min(ix1 + 1, boundary[0]);
-        int ix3 = std::min(ix1 + 2, boundary[0]);
-        int ix0 = std::max(0, ix1 - 1);
+        int ix2 = std::min<int>(ix1 + 1, boundary[0]);
+        int ix3 = std::min<int>(ix1 + 2, boundary[0]);
+        int ix0 = std::max<int>(0, ix1 - 1);
 
         int iy1 = location.y;
-        int iy2 = std::min(iy1 + 1, boundary[1]);
-        int iy3 = std::min(iy1 + 2, boundary[1]);
-        int iy0 = std::max(0, iy1 - 1);
+        int iy2 = std::min<int>(iy1 + 1, boundary[1]);
+        int iy3 = std::min<int>(iy1 + 2, boundary[1]);
+        int iy0 = std::max<int>(0, iy1 - 1);
 
         int iz1 = location.z;
-        int iz2 = std::min(iz1 + 1, boundary[2]);
-        int iz3 = std::min(iz1 + 2, boundary[2]);
+        int iz2 = std::min<int>(iz1 + 1, boundary[2]);
+        int iz3 = std::min<int>(iz1 + 2, boundary[2]);
         int iz0 = std::max(0, iz1 - 1);
 
-        return Interpolate3D({
-            {
-                {
-                    resourceView.Get({ ix0, iy0, iz0 }), 
-                    resourceView.Get({ ix0, iy0, iz1 }), 
-                    resourceView.Get({ ix0, iy0, iz2 }), 
-                    resourceView.Get({ ix0, iy0, iz3 })
+        return Interpolate3D(Interpolate3DParams<glm::vec<NChannels, T, Q>>{
+            Interpolate2DParams<glm::vec<NChannels, T, Q>>{
+                std::array<glm::vec<NChannels, T, Q>, 4>{
+                    resourceView.template Get<T, NChannels, Q>({ ix0, iy0, iz0 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix0, iy0, iz1 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix0, iy0, iz2 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix0, iy0, iz3 })
                 },
-                {
-                    resourceView.Get({ ix0, iy1, iz0 }), 
-                    resourceView.Get({ ix0, iy1, iz1 }), 
-                    resourceView.Get({ ix0, iy1, iz2 }), 
-                    resourceView.Get({ ix0, iy1, iz3 })
+                std::array<glm::vec<NChannels, T, Q>, 4>{
+                    resourceView.template Get<T, NChannels, Q>({ ix0, iy1, iz0 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix0, iy1, iz1 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix0, iy1, iz2 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix0, iy1, iz3 })
                 },
-                {
-                    resourceView.Get({ ix0, iy2, iz0 }), 
-                    resourceView.Get({ ix0, iy2, iz1 }), 
-                    resourceView.Get({ ix0, iy2, iz2 }), 
-                    resourceView.Get({ ix0, iy2, iz3 })
+                std::array<glm::vec<NChannels, T, Q>, 4>{
+                    resourceView.template Get<T, NChannels, Q>({ ix0, iy2, iz0 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix0, iy2, iz1 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix0, iy2, iz2 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix0, iy2, iz3 })
                 },
-                {
-                    resourceView.Get({ ix0, iy3, iz0 }), 
-                    resourceView.Get({ ix0, iy3, iz1 }), 
-                    resourceView.Get({ ix0, iy3, iz2 }), 
-                    resourceView.Get({ ix0, iy3, iz3 })
+                std::array<glm::vec<NChannels, T, Q>, 4>{
+                    resourceView.template Get<T, NChannels, Q>({ ix0, iy3, iz0 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix0, iy3, iz1 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix0, iy3, iz2 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix0, iy3, iz3 })
                 }
             },
-            {
-                {
-                    resourceView.Get({ ix1, iy0, iz0 }), 
-                    resourceView.Get({ ix1, iy0, iz1 }), 
-                    resourceView.Get({ ix1, iy0, iz2 }), 
-                    resourceView.Get({ ix1, iy0, iz3 })
+            Interpolate2DParams<glm::vec<NChannels, T, Q>>{
+                std::array<glm::vec<NChannels, T, Q>, 4>{
+                    resourceView.template Get<T, NChannels, Q>({ ix1, iy0, iz0 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix1, iy0, iz1 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix1, iy0, iz2 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix1, iy0, iz3 })
                 },
-                {
-                    resourceView.Get({ ix1, iy1, iz0 }), 
-                    resourceView.Get({ ix1, iy1, iz1 }), 
-                    resourceView.Get({ ix1, iy1, iz2 }), 
-                    resourceView.Get({ ix1, iy1, iz3 })
+                std::array<glm::vec<NChannels, T, Q>, 4>{
+                    resourceView.template Get<T, NChannels, Q>({ ix1, iy1, iz0 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix1, iy1, iz1 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix1, iy1, iz2 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix1, iy1, iz3 })
                 },
-                {
-                    resourceView.Get({ ix1, iy2, iz0 }), 
-                    resourceView.Get({ ix1, iy2, iz1 }), 
-                    resourceView.Get({ ix1, iy2, iz2 }), 
-                    resourceView.Get({ ix1, iy2, iz3 })
+                std::array<glm::vec<NChannels, T, Q>, 4>{
+                    resourceView.template Get<T, NChannels, Q>({ ix1, iy2, iz0 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix1, iy2, iz1 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix1, iy2, iz2 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix1, iy2, iz3 })
                 },
-                {
-                    resourceView.Get({ ix1, iy3, iz0 }), 
-                    resourceView.Get({ ix1, iy3, iz1 }), 
-                    resourceView.Get({ ix1, iy3, iz2 }), 
-                    resourceView.Get({ ix1, iy3, iz3 })
+                std::array<glm::vec<NChannels, T, Q>, 4>{
+                    resourceView.template Get<T, NChannels, Q>({ ix1, iy3, iz0 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix1, iy3, iz1 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix1, iy3, iz2 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix1, iy3, iz3 })
                 }
             },
-            {
-                {
-                    resourceView.Get({ ix2, iy0, iz0 }), 
-                    resourceView.Get({ ix2, iy0, iz1 }), 
-                    resourceView.Get({ ix2, iy0, iz2 }), 
-                    resourceView.Get({ ix2, iy0, iz3 })
+            Interpolate2DParams<glm::vec<NChannels, T, Q>>{
+                std::array<glm::vec<NChannels, T, Q>, 4>{
+                    resourceView.template Get<T, NChannels, Q>({ ix2, iy0, iz0 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix2, iy0, iz1 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix2, iy0, iz2 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix2, iy0, iz3 })
                 },
-                {
-                    resourceView.Get({ ix2, iy1, iz0 }), 
-                    resourceView.Get({ ix2, iy1, iz1 }), 
-                    resourceView.Get({ ix2, iy1, iz2 }), 
-                    resourceView.Get({ ix2, iy1, iz3 })
+                std::array<glm::vec<NChannels, T, Q>, 4>{
+                    resourceView.template Get<T, NChannels, Q>({ ix2, iy1, iz0 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix2, iy1, iz1 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix2, iy1, iz2 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix2, iy1, iz3 })
                 },
-                {
-                    resourceView.Get({ ix2, iy2, iz0 }), 
-                    resourceView.Get({ ix2, iy2, iz1 }), 
-                    resourceView.Get({ ix2, iy2, iz2 }), 
-                    resourceView.Get({ ix2, iy2, iz3 })
+                std::array<glm::vec<NChannels, T, Q>, 4>{
+                    resourceView.template Get<T, NChannels, Q>({ ix2, iy2, iz0 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix2, iy2, iz1 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix2, iy2, iz2 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix2, iy2, iz3 })
                 },
-                {
-                    resourceView.Get({ ix2, iy3, iz0 }), 
-                    resourceView.Get({ ix2, iy3, iz1 }), 
-                    resourceView.Get({ ix2, iy3, iz2 }), 
-                    resourceView.Get({ ix2, iy3, iz3 })
+                std::array<glm::vec<NChannels, T, Q>, 4>{
+                    resourceView.template Get<T, NChannels, Q>({ ix2, iy3, iz0 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix2, iy3, iz1 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix2, iy3, iz2 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix2, iy3, iz3 })
                 }
             },
-            {
-                {
-                    resourceView.Get({ ix3, iy0, iz0 }), 
-                    resourceView.Get({ ix3, iy0, iz1 }), 
-                    resourceView.Get({ ix3, iy0, iz2 }), 
-                    resourceView.Get({ ix3, iy0, iz3 })
+            Interpolate2DParams<glm::vec<NChannels, T, Q>>{
+                std::array<glm::vec<NChannels, T, Q>, 4>{
+                    resourceView.template Get<T, NChannels, Q>({ ix3, iy0, iz0 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix3, iy0, iz1 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix3, iy0, iz2 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix3, iy0, iz3 })
                 },
-                {
-                    resourceView.Get({ ix3, iy1, iz0 }), 
-                    resourceView.Get({ ix3, iy1, iz1 }), 
-                    resourceView.Get({ ix3, iy1, iz2 }), 
-                    resourceView.Get({ ix3, iy1, iz3 })
+                std::array<glm::vec<NChannels, T, Q>, 4>{
+                    resourceView.template Get<T, NChannels, Q>({ ix3, iy1, iz0 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix3, iy1, iz1 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix3, iy1, iz2 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix3, iy1, iz3 })
                 },
-                {
-                    resourceView.Get({ ix3, iy2, iz0 }), 
-                    resourceView.Get({ ix3, iy2, iz1 }), 
-                    resourceView.Get({ ix3, iy2, iz2 }), 
-                    resourceView.Get({ ix3, iy2, iz3 })
+                std::array<glm::vec<NChannels, T, Q>, 4>{
+                    resourceView.template Get<T, NChannels, Q>({ ix3, iy2, iz0 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix3, iy2, iz1 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix3, iy2, iz2 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix3, iy2, iz3 })
                 },
-                {
-                    resourceView.Get({ ix3, iy3, iz0 }), 
-                    resourceView.Get({ ix3, iy3, iz1 }), 
-                    resourceView.Get({ ix3, iy3, iz2 }), 
-                    resourceView.Get({ ix3, iy3, iz3 })
+                std::array<glm::vec<NChannels, T, Q>, 4>{
+                    resourceView.template Get<T, NChannels, Q>({ ix3, iy3, iz0 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix3, iy3, iz1 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix3, iy3, iz2 }),
+                    resourceView.template Get<T, NChannels, Q>({ ix3, iy3, iz3 })
                 }
             }
         }, xMix, yMix, zMix);

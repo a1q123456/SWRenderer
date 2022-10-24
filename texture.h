@@ -42,7 +42,6 @@ private:
     std::vector<ResourceView<N>> resourceViews;
     TextureDesc<N> desc;
     ETextureFilteringMethods filterMethod;
-    // pro::proxy<SamplerFacade> samplerAlgorithm;
     std::vector<TextureBoundary<N>> boundaries;
     
     void LoadMipmap(

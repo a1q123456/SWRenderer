@@ -54,10 +54,10 @@ void rescaleLineCubic(const std::span<std::uint8_t>& imageData,
         srcI2 = glm::clamp(srcI2, TextureBoundary<Dim>{0}, srcBoundary - increment);
         srcI3 = glm::clamp(srcI3, TextureBoundary<Dim>{0}, srcBoundary - increment);
 
-        auto p0 = rv.Get<float, 4, glm::defaultp>(srcI0);
-        auto p1 = rv.Get<float, 4, glm::defaultp>(srcI1);
-        auto p2 = rv.Get<float, 4, glm::defaultp>(srcI2);
-        auto p3 = rv.Get<float, 4, glm::defaultp>(srcI3);
+        auto p0 = rv.template Get<float, 4, glm::defaultp>(srcI0);
+        auto p1 = rv.template Get<float, 4, glm::defaultp>(srcI1);
+        auto p2 = rv.template Get<float, 4, glm::defaultp>(srcI2);
+        auto p3 = rv.template Get<float, 4, glm::defaultp>(srcI3);
 
         auto dstVal = kernelValues[0] * p0 + 
                         kernelValues[1] * p1 + 

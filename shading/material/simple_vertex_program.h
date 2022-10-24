@@ -1,7 +1,7 @@
 #pragma once
 #include "shading/vertex_program.h"
 
-class SimpleVertexProgram : public VertexProgram
+class SimpleVertexProgram
 {
 private:
     glm::mat4 modelTransform;
@@ -9,7 +9,7 @@ private:
 public:
     void SetModelMatrix(const glm::mat4 &modelTransform) noexcept { this->modelTransform = modelTransform;}
     void SetViewProjectMatrix(const glm::mat4 &projVP) noexcept { this->projVP = projVP; }
-    const std::vector<VertexDataDescriptor>& GetInput() const noexcept override;
-    const std::vector<VertexDataDescriptor>& GetOutput() const noexcept override;
-    VertexFunction GetEntry() const noexcept override;
+    const std::vector<VertexDataDescriptor>& GetInputDefinition() const noexcept;
+    const std::vector<VertexDataDescriptor>& GetOutputDefinition() const noexcept;
+    ProgramDataPack GetOutput(const ProgramDataPack& args) const noexcept;
 };

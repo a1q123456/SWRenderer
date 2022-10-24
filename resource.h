@@ -83,7 +83,7 @@ class ResourceView
     static_assert(Dim >= 1, "Dimenssion must be greater than or equal to 1");
 private:
     Resource* resource = nullptr;
-    EResourceDataType dataType = EResourceDataType::UInt;
+    EResourceDataType dataType = EResourceDataType::UInt8;
     std::size_t lineSize = 0;
     TextureBoundary<Dim> boundary;
     std::size_t start = 0;
@@ -149,7 +149,7 @@ public:
 
     std::uint8_t* Data() const noexcept
     {
-        return resource.data.get();
+        return resource->Data();
     }
 
     std::size_t SizeInBytes() const noexcept

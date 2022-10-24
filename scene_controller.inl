@@ -96,7 +96,7 @@ SceneController<Canvas>::SceneController(T&& canvas) : width(canvas.Width()), he
 
     pixelProgram.UseLights({&ambientLight, &pointLight});
     pixelProgram.SetDiffuseMap(textureData.get(), textureW, textureH);
-    programCtx = renderer.LinkProgram(vertexProgram, pixelProgram);
+    programCtx = renderer.LinkProgram(&vertexProgram, &pixelProgram);
 }
 
 template<CanvasDrawable Canvas>
