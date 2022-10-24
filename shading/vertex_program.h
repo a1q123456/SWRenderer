@@ -14,7 +14,7 @@ struct VertexShaderOutputDispatchable : pro::dispatch<ProgramDataPack(const Prog
 struct VertexShaderInputDefinitionDispatchable : pro::dispatch<const std::vector<VertexDataDescriptor>&()>
 {
     template <class TSelf>
-    ProgramDataPack operator()(const TSelf& self) const noexcept
+    const std::vector<VertexDataDescriptor>& operator()(const TSelf& self) const noexcept
     {
         return self.GetInputDefinition();
     }
@@ -23,7 +23,7 @@ struct VertexShaderInputDefinitionDispatchable : pro::dispatch<const std::vector
 struct VertexShaderOutputDefinitionDispatchable : pro::dispatch<const std::vector<VertexDataDescriptor>&()>
 {
     template <class TSelf>
-    ProgramDataPack operator()(const TSelf& self) const noexcept
+    const std::vector<VertexDataDescriptor>& operator()(const TSelf& self) const noexcept
     {
         return self.GetOutputDefinition();
     }

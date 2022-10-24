@@ -17,7 +17,7 @@ struct LightEntry
 struct PixelShaderInputDefinitionDispatchable : pro::dispatch<std::vector<VertexDataDescriptor>()>
 {
     template <class TSelf>
-    glm::vec4 operator()(const TSelf& self) const noexcept
+    std::vector<VertexDataDescriptor> operator()(const TSelf& self) const noexcept
     {
         return self.GetInputDefinition();
     }

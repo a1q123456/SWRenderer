@@ -159,7 +159,7 @@ Win32Window::Win32Window(
     ShowWindow(hWnd,
                nShowCmd);
     UpdateWindow(hWnd);
-    scene = std::make_unique<TestSceneController<Win32Canvas>>(Win32Canvas{mHdc, width, height});
+    scene = std::make_unique<SceneController<Win32Canvas>>(Win32Canvas{mHdc, width, height});
     scene->SetHWND(hWnd);
     scene->CreateBuffer(EPixelFormat::RGBA_U8);
 }

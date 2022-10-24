@@ -57,8 +57,8 @@ class SWRenderer
     std::list<float> stats;
 public:
     static ProgramContext LinkProgram(
-        const pro::proxy<VertexShaderFacade>& vp,
-        const pro::proxy<PixelShaderFacade>& pp) noexcept;
+        pro::proxy<VertexShaderFacade> vp,
+        pro::proxy<PixelShaderFacade> pp) noexcept;
 
     void CreateBuffer(EPixelFormat pixelFormat);
     template<CanvasDrawable T>

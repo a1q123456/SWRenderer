@@ -130,16 +130,16 @@ struct Triangle
 };
 
 template <CanvasDrawable Canvas>
-ProgramContext SWRenderer<Canvas>::LinkProgram(const pro::proxy<VertexShaderFacade>& vp,
-                                                const pro::proxy<PixelShaderFacade>& pp) noexcept
+ProgramContext SWRenderer<Canvas>::LinkProgram(pro::proxy<VertexShaderFacade> vp,
+                                                pro::proxy<PixelShaderFacade> pp) noexcept
 {
     ProgramContext ctx;
     ctx.vertexProgram = std::move(vp);
     ctx.pixelProgram = std::move(pp);
 
-    ctx.vsInputDesc = vp.invoke<VertexShaderInputDefinitionDispatchable>();
-    ctx.vsOutputDesc = vp.invoke<VertexShaderOutputDefinitionDispatchable>();
-    ctx.psInputDesc = pp.invoke<PixelShaderInputDefinitionDispatchable>();
+    ctx.vsInputDesc = ctx.vertexProgram.invoke<VertexShaderInputDefinitionDispatchable>();
+    ctx.vsOutputDesc = ctx.vertexProgram.invoke<VertexShaderOutputDefinitionDispatchable>();
+    ctx.psInputDesc = ctx.pixelProgram.invoke<PixelShaderInputDefinitionDispatchable>();
 
     ctx.inputVertexAttributes = GetVertexAttributeMask(ctx.vsInputDesc);
 
