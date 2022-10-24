@@ -10,10 +10,10 @@
 - [x] Phong Material
 - [x] Blinn Material
 - [x] MSAA
-- [ ] Mipmap
+- [x] Mipmap
+- [x] Bilinear Filter
+- [x] Trilinear Filter
 - [ ] Anisotropic Filter
-- [ ] Bilinear Filter
-- [ ] Trilinear Filter
 - [ ] Ray Tracer
 - [ ] Spot Light
 - [ ] Directional Light

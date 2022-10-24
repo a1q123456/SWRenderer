@@ -40,7 +40,7 @@ class SWRenderer
     TCanvas canvas;
     int width = 500;
     int height = 500;
-    int multisampleLevel = 8;
+    int multisampleLevel = 1;
     
     std::unique_ptr<float[]> colorBuffer = nullptr;
     std::unique_ptr<float[]> zBuffer = nullptr;
@@ -74,6 +74,7 @@ public:
     void SetViewMatrix(const glm::mat4 &view);
     void ProjectionMatrix(const glm::mat4 &proj);
     void Draw(float timeElapsed);
+    void SetMultiSampleLevel(int level) noexcept { multisampleLevel = level; }
     
     auto& Canvas() noexcept
     {

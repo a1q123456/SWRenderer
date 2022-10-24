@@ -12,7 +12,7 @@ class SceneController
     int width = 500;
     int height = 500;
 
-    std::shared_ptr<std::uint8_t> textureData;
+    std::unique_ptr<std::uint8_t, void(*)(void*)> textureData;
     int textureW = 0;
     int textureH = 0;
     int textureChannels = 0;

@@ -69,7 +69,7 @@ constexpr int indexList[] = {
 
 template<CanvasDrawable Canvas>
 template<CanvasDrawable T>
-SceneController<Canvas>::SceneController(T&& canvas) : width(canvas.Width()), height(canvas.Height()), renderer(std::move(canvas))
+SceneController<Canvas>::SceneController(T&& canvas) : width(canvas.Width()), height(canvas.Height()), renderer(std::move(canvas)), textureData(nullptr, stbi_image_free)
 {
     float fov = 50;
     float aspectRatio = (float)width / (float)height;
@@ -79,7 +79,7 @@ SceneController<Canvas>::SceneController(T&& canvas) : width(canvas.Width()), he
     projectionMatrix = glm::perspective(glm::radians(55.f), aspectRatio, zNear, zFar);
     renderer.ProjectionMatrix(projectionMatrix);
 
-    textureData.reset(stbi_load("sample_640x426.jpeg", &textureW, &textureH, &textureChannels, STBI_rgb_alpha), stbi_image_free);
+    textureData.reset(stbi_load("sample_640x426.jpeg", &textureW, &textureH, &textureChannels, STBI_rgb_alpha));
     if (!textureData)
     {
         throw std::runtime_error(stbi_failure_reason());
