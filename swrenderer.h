@@ -40,7 +40,7 @@ class SWRenderer
     TCanvas canvas;
     int width = 500;
     int height = 500;
-    int multisampleLevel = 1;
+    int multisampleLevel = 0;
     
     std::unique_ptr<float[]> colorBuffer = nullptr;
     std::unique_ptr<float[]> zBuffer = nullptr;
@@ -82,7 +82,8 @@ public:
     }
 
 private:
-    std::vector<glm::vec3> GenerateSubsamples(glm::vec3 pt);
+    std::size_t GetNumberOfSubsamples() const noexcept;
+    void GenerateSubsamples(glm::vec3 pt, std::vector<glm::vec3>& subsamples);
     void ClearBuffer(std::unique_ptr<float[]>& buffer, std::size_t nElement, float value);
 };
 

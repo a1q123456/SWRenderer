@@ -102,8 +102,7 @@ void rescaleImage2D(ETextureFilteringMethods method, const std::span<std::uint8_
                 tempBufferSpan.subspan(dstLineSize * y, dstLineSize),
                 ResourceCoordinate1D{0});
         }
-        // std::memset(rescaledData.data(), 0, rescaledData.size_bytes());
-        // std::memcpy(rescaledData.data(), tempBufferSpan.data(), rescaledData.size_bytes());
+
         for (int x = 0; x < dstW; x++)
         {
             rescaleLineCubic<2>(

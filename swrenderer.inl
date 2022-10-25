@@ -1,5 +1,6 @@
 #include "utils.h"
 #include "data_pack.h"
+#include <omp.h>
 
 #define LOAD_ATTR_IDX(cattr, outidx, ctype) \
     if (d.attr == cattr)                    \
@@ -207,31 +208,41 @@ void SWRenderer<Canvas>::ProjectionMatrix(const glm::mat4 &proj)
 }
 
 template <CanvasDrawable Canvas>
-std::vector<glm::vec3> SWRenderer<Canvas>::GenerateSubsamples(glm::vec3 pt)
+std::size_t SWRenderer<Canvas>::GetNumberOfSubsamples() const noexcept
 {
-    std::vector<glm::vec3> ret;
-    auto step = 1.0 / multisampleLevel;
-    auto start = step / 2;
-    bool even = false;
-    for (double x = start; x < 1.0; x += step)
+    return std::max(1, (1 << multisampleLevel) * (1 << multisampleLevel) / 2);
+}
+
+template <CanvasDrawable Canvas>
+void SWRenderer<Canvas>::GenerateSubsamples(glm::vec3 pt, std::vector<glm::vec3>& subsamples)
+{
+    subsamples.clear();
+    if (multisampleLevel == 0)
     {
-        even = !even;
-        for (double y = start; y < 1.0; y += step)
-        {
-            even = !even;
-            if (even)
-            {
-                continue;
-            }
-            glm::vec3 vec{x - 0.5, y - 0.5, 0.0};
-            // vec *= (glm::sqrt(5.0) / 2.0);
-            // vec = glm::rotateZ(vec, glm::atan(0.5f));
-            vec += pt;
-            ret.emplace_back(vec);
-        }
+        subsamples.emplace_back(pt);
+        return;
     }
 
-    return ret;
+    int level = 1 << multisampleLevel;
+    int level2 = level * level;
+
+    auto step = 1.0 / level;
+    auto start = step / 2;
+
+    for (int v = 0; v < level2; v += 2)
+    {
+        int x = v % level;
+        int y = v / level;
+        
+        if (y % 2 == 1)
+        {
+            x++;
+        }
+
+        glm::vec3 vec{x * step + start - 0.5, y * step + start - 0.5, 0.0};
+        vec += pt;
+        subsamples.emplace_back(vec);
+    }
 }
 
 template <CanvasDrawable Canvas>
@@ -336,12 +347,14 @@ void SWRenderer<Canvas>::Draw(float timeElapsed)
                 }
             }
         }
+
+        // Some issue with this if block
         if (programCtx->vsOutputsColor)
         {
             for (int j = 0; j < 3; j++)
             {
                 color[j] /= rv[j].z;
-                for (int i = 0; i < (int)programCtx->vsOutputUvType; i++)
+                for (int i = 0; i < (int)programCtx->vsOutputColorType; i++)
                 {
                     vsOutput[j].SetData(0, i, programCtx->vsOutputColorIdx, color[j][i]);
                 }
@@ -349,34 +362,38 @@ void SWRenderer<Canvas>::Draw(float timeElapsed)
         }
 
         triangleList[i / 3] = Triangle{rv[0], rv[1], rv[2], vsOutput};
-#ifdef _DEBUG
-        // canvas[bufferIndex]->LineTo(std::round(rv[0].x), std::round(rv[0].y), std::round(rv[1].x), std::round(rv[1].y), 0xFFFFFFFF);
-        // canvas[bufferIndex]->LineTo(std::round(rv[1].x), std::round(rv[1].y), std::round(rv[2].x), std::round(rv[2].y), 0xFFFFFFFF);
-        // canvas[bufferIndex]->LineTo(std::round(rv[2].x), std::round(rv[2].y), std::round(rv[0].x), std::round(rv[0].y), 0xFFFFFFFF);
-#endif
+
     }
     triangleList.erase(std::remove_if(std::begin(triangleList), std::end(triangleList), [](const Triangle &t)
                                       { return !t.isValid; }),
                        std::end(triangleList));
     // for cache friendly
-    std::sort(std::begin(triangleList), std::end(triangleList), [](const Triangle &a, const Triangle &b)
-              { return a.avg < b.avg; });
+    // std::sort(std::begin(triangleList), std::end(triangleList), [](const Triangle &a, const Triangle &b)
+    //           { return a.avg < b.avg; });
 
+    std::vector<glm::vec3> pixelSubsamples{};
+    std::vector<int> colorMasks{};
+    std::vector<int> samplesInTriangle;
+    std::vector<std::tuple<glm::vec4, float>> colors{
+        GetNumberOfSubsamples(),
+        std::make_tuple(glm::vec4{}, std::numeric_limits<float>::infinity())
+    };
+    colorMasks.resize(GetNumberOfSubsamples(), 0);
+    pixelSubsamples.reserve(GetNumberOfSubsamples());
+    samplesInTriangle.reserve(GetNumberOfSubsamples());
+    
     for (int y = 0; y < height; y++)
     {
 #ifndef _DEBUG
-#pragma omp parallel for
+#pragma omp parallel for firstprivate(pixelSubsamples, colorMasks, colors, samplesInTriangle)
 #endif
         for (int x = 0; x < width; x++)
         {
             glm::vec3 pt{x, y, 0};
-            auto pixelSubsamples = GenerateSubsamples(pt);
 
-            std::vector<std::tuple<glm::vec4, float>> colors{
-                pixelSubsamples.size(),
-                std::make_tuple(glm::vec4{}, std::numeric_limits<float>::infinity())};
-            std::vector<int> colorMasks{};
-            colorMasks.resize(pixelSubsamples.size(), 0);
+            colorMasks.assign(colorMasks.size(), 0);
+            colors.assign(colors.size(), std::make_tuple(glm::vec4{}, std::numeric_limits<float>::infinity()));
+            GenerateSubsamples(pt, pixelSubsamples);
             
             for (auto &&tri : triangleList)
             {
@@ -386,9 +403,15 @@ void SWRenderer<Canvas>::Draw(float timeElapsed)
                 }
 
                 auto hasSubsample = !tri.PixelInTriangle(pt);
-                auto subsamples = !hasSubsample ? std::vector<glm::vec3>{pt} : pixelSubsamples;
+                auto& subsamples = pixelSubsamples;
+                
+                if (!hasSubsample)
+                {
+                    subsamples.clear();
+                    subsamples.emplace_back(pt);
+                }
 
-                std::vector<int> samplesInTriangle;
+                samplesInTriangle.clear();
                 for (int i = 0; i < subsamples.size(); i++)
                 {
                     auto &subsample = subsamples[i];
