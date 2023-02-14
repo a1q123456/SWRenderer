@@ -185,7 +185,7 @@ void SceneController<Canvas>::MouseMove(int x, int y)
     auto deltaX = x - lastMouseX;
     auto deltaY = y - lastMouseY;
     cubeRotation.x -= (float)deltaX * 2.0 / (float)width;
-    cubeRotation.y += (float)deltaY * 2.0 / (float)height;
+    cubeRotation.y -= (float)deltaY * 2.0 / (float)height;
     cubeRotation.y = std::clamp(cubeRotation.y, -89.99f, 89.99f);
     lastMouseX = x;
     lastMouseY = y;

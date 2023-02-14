@@ -1,36 +1,31 @@
-#include "utils.h"
 #include "data_pack.h"
-#include <omp.h>
+#include "utils.h"
 
-#define LOAD_ATTR_IDX(cattr, outidx, ctype) \
-    if (d.attr == cattr)                    \
-    {                                       \
-        outidx = i;                         \
-        ctype = d.type;                     \
+#define LOAD_ATTR_IDX(cattr, outidx, ctype)                                                                            \
+    if (d.attr == cattr)                                                                                               \
+    {                                                                                                                  \
+        outidx = i;                                                                                                    \
+        ctype = d.type;                                                                                                \
     }
 
 template <CanvasDrawable Canvas>
 template <CanvasDrawable T>
-SWRenderer<Canvas>::SWRenderer(T &&canvas) : canvas(std::forward<T>(canvas)),
-                                             width(this->canvas.Width()),
-                                             height(this->canvas.Height())
+SWRenderer<Canvas>::SWRenderer(T&& canvas)
+    : canvas(std::forward<T>(canvas)), width(this->canvas.Width()), height(this->canvas.Height())
 {
 }
 
-template <CanvasDrawable Canvas>
-void SWRenderer<Canvas>::ClearColorBuffer(std::uint32_t color)
+template <CanvasDrawable Canvas> void SWRenderer<Canvas>::ClearColorBuffer(std::uint32_t color)
 {
     canvas.Clear(color);
 }
 
-template <CanvasDrawable Canvas>
-void SWRenderer<Canvas>::ClearZBuffer()
+template <CanvasDrawable Canvas> void SWRenderer<Canvas>::ClearZBuffer()
 {
     ClearBuffer(zBuffer, 1, std::numeric_limits<float>::infinity());
 }
 
-template <CanvasDrawable Canvas>
-void SWRenderer<Canvas>::CreateBuffer(EPixelFormat pixelFormat)
+template <CanvasDrawable Canvas> void SWRenderer<Canvas>::CreateBuffer(EPixelFormat pixelFormat)
 {
     zBuffer.reset(new float[width * height]);
     colorBuffer.reset(new float[width * height * 4]);
@@ -48,22 +43,12 @@ struct Triangle
     float avg = 0.0;
 
     Triangle() = default;
-    Triangle(
-        const glm::vec3 &a,
-        const glm::vec3 &b,
-        const glm::vec3 &c,
-        ProgramDataPack vsOutput[3]) : p0(a),
-                                       p1(b),
-                                       p2(c),
-                                       isValid(true),
-                                       min(glm::vec3{
-                                           std::min(std::min(a.x, b.x), c.x),
-                                           std::min(std::min(a.y, b.y), c.y),
-                                           std::min(std::min(a.z, b.z), c.z)}),
-                                       max(glm::vec3{
-                                           std::max(std::max(a.x, b.x), c.x),
-                                           std::max(std::max(a.y, b.y), c.y),
-                                           std::max(std::max(a.z, b.z), c.z)})
+    Triangle(const glm::vec3& a, const glm::vec3& b, const glm::vec3& c, ProgramDataPack vsOutput[3])
+        : p0(a), p1(b), p2(c), isValid(true),
+          min(glm::vec3{std::min(std::min(a.x, b.x), c.x), std::min(std::min(a.y, b.y), c.y),
+                        std::min(std::min(a.z, b.z), c.z)}),
+          max(glm::vec3{std::max(std::max(a.x, b.x), c.x), std::max(std::max(a.y, b.y), c.y),
+                        std::max(std::max(a.z, b.z), c.z)})
 
     {
         for (int i = 0; i < 3; i++)
@@ -76,12 +61,12 @@ struct Triangle
         avg = (avgTri.x + avgTri.y + avgTri.z) / 3.0;
     }
 
-    bool InRange(const glm::vec3 &pt) const noexcept
+    bool InRange(const glm::vec3& pt) const noexcept
     {
         return pt.x >= min.x && pt.y >= min.y && pt.x <= max.x && pt.y <= max.y;
     }
 
-    glm::vec3 Barycentric(const glm::vec3 &pt)
+    glm::vec3 Barycentric(const glm::vec3& pt)
     {
         glm::vec3 a{p0};
         glm::vec3 b{p1};
@@ -109,7 +94,7 @@ struct Triangle
         return ret;
     }
 
-    bool PixelInTriangle(const glm::vec3 &pt)
+    bool PixelInTriangle(const glm::vec3& pt)
     {
         glm::vec3 pts[4];
         pts[0] = pt + glm::vec3{0.5, 0.5, 0};
@@ -117,13 +102,12 @@ struct Triangle
         pts[2] = pt + glm::vec3{-0.5, -0.5, 0};
         pts[3] = pt + glm::vec3{0.5, -0.5, 0};
 
-        auto weights = pts | std::views::transform([&](auto &&pt)
-                                                   { return Barycentric(pt); });
-        return std::ranges::all_of(std::ranges::begin(weights), std::ranges::end(weights), [](auto &&weight)
-                                   { return weight.x >= 0 && weight.y >= 0 && weight.z >= 0; });
+        auto weights = pts | std::views::transform([&](auto&& pt) { return Barycentric(pt); });
+        return std::ranges::all_of(std::ranges::begin(weights), std::ranges::end(weights),
+                                   [](auto&& weight) { return weight.x >= 0 && weight.y >= 0 && weight.z >= 0; });
     }
 
-    bool PointInTriangle(const glm::vec3 &pt)
+    bool PointInTriangle(const glm::vec3& pt)
     {
         auto weight = Barycentric(pt);
         return weight.x >= 0 && weight.y >= 0 && weight.z >= 0;
@@ -132,7 +116,7 @@ struct Triangle
 
 template <CanvasDrawable Canvas>
 ProgramContext SWRenderer<Canvas>::LinkProgram(pro::proxy<VertexShaderFacade> vp,
-                                                pro::proxy<PixelShaderFacade> pp) noexcept
+                                               pro::proxy<PixelShaderFacade> pp) noexcept
 {
     ProgramContext ctx;
     ctx.vertexProgram = std::move(vp);
@@ -156,7 +140,7 @@ ProgramContext SWRenderer<Canvas>::LinkProgram(pro::proxy<VertexShaderFacade> vp
 
     for (int i = 0; i < ctx.vsOutputDesc.size(); i++)
     {
-        auto &&d = ctx.vsOutputDesc[i];
+        auto&& d = ctx.vsOutputDesc[i];
         LOAD_ATTR_IDX(VertexAttributes::Position, ctx.vsOutputPosIdx, ctx.vsOutputPosType)
         LOAD_ATTR_IDX(VertexAttributes::TextureCoordinate, ctx.vsOutputUvIdx, ctx.vsOutputUvType)
         LOAD_ATTR_IDX(VertexAttributes::Color, ctx.vsOutputColorIdx, ctx.vsOutputColorType)
@@ -164,17 +148,17 @@ ProgramContext SWRenderer<Canvas>::LinkProgram(pro::proxy<VertexShaderFacade> vp
 
     for (int src = 0; src < ctx.psInputDesc.size(); src++)
     {
-        auto &&d = ctx.psInputDesc[src];
+        auto&& d = ctx.psInputDesc[src];
         std::vector<VertexDataDescriptor>::const_iterator iter;
         if (d.attr == VertexAttributes::Custom)
         {
-            iter = std::find_if(std::cbegin(ctx.vsOutputDesc), std::cend(ctx.vsOutputDesc), [d](auto &&vd)
-                                { return vd.name && std::strcmp(d.name, vd.name) == 0; });
+            iter = std::find_if(std::cbegin(ctx.vsOutputDesc), std::cend(ctx.vsOutputDesc),
+                                [d](auto&& vd) { return vd.name && std::strcmp(d.name, vd.name) == 0; });
         }
         else
         {
-            iter = std::find_if(std::cbegin(ctx.vsOutputDesc), std::cend(ctx.vsOutputDesc), [d](auto &&vd)
-                                { return d.attr == vd.attr; });
+            iter = std::find_if(std::cbegin(ctx.vsOutputDesc), std::cend(ctx.vsOutputDesc),
+                                [d](auto&& vd) { return d.attr == vd.attr; });
         }
         assert(iter != std::cend(ctx.vsOutputDesc));
 
@@ -183,32 +167,27 @@ ProgramContext SWRenderer<Canvas>::LinkProgram(pro::proxy<VertexShaderFacade> vp
     return ctx;
 }
 
-template <CanvasDrawable Canvas>
-void SWRenderer<Canvas>::SetProgram(ProgramContext &programCtx)
+template <CanvasDrawable Canvas> void SWRenderer<Canvas>::SetProgram(ProgramContext& programCtx)
 {
     this->programCtx = &programCtx;
 }
 
-template <CanvasDrawable Canvas>
-void SWRenderer<Canvas>::SetMesh(ModelData &mesh)
+template <CanvasDrawable Canvas> void SWRenderer<Canvas>::SetMesh(ModelData& mesh)
 {
     modelData = &mesh;
 }
 
-template <CanvasDrawable Canvas>
-void SWRenderer<Canvas>::SetViewMatrix(const glm::mat4 &view)
+template <CanvasDrawable Canvas> void SWRenderer<Canvas>::SetViewMatrix(const glm::mat4& view)
 {
     viewTransform = view;
 }
 
-template <CanvasDrawable Canvas>
-void SWRenderer<Canvas>::ProjectionMatrix(const glm::mat4 &proj)
+template <CanvasDrawable Canvas> void SWRenderer<Canvas>::ProjectionMatrix(const glm::mat4& proj)
 {
     projectionMatrix = proj;
 }
 
-template <CanvasDrawable Canvas>
-std::size_t SWRenderer<Canvas>::GetNumberOfSubsamples() const noexcept
+template <CanvasDrawable Canvas> std::size_t SWRenderer<Canvas>::GetNumberOfSubsamples() const noexcept
 {
     return std::max(1, (1 << multisampleLevel) * (1 << multisampleLevel) / 2);
 }
@@ -233,7 +212,7 @@ void SWRenderer<Canvas>::GenerateSubsamples(glm::vec3 pt, std::vector<glm::vec3>
     {
         int x = v % level;
         int y = v / level;
-        
+
         if (y % 2 == 1)
         {
             x++;
@@ -246,7 +225,7 @@ void SWRenderer<Canvas>::GenerateSubsamples(glm::vec3 pt, std::vector<glm::vec3>
 }
 
 template <CanvasDrawable Canvas>
-void SWRenderer<Canvas>::ClearBuffer(std::unique_ptr<float[]> &buffer, std::size_t nElement, float value)
+void SWRenderer<Canvas>::ClearBuffer(std::unique_ptr<float[]>& buffer, std::size_t nElement, float value)
 {
     for (int i = 0; i < width * nElement * height; i++)
     {
@@ -254,8 +233,7 @@ void SWRenderer<Canvas>::ClearBuffer(std::unique_ptr<float[]> &buffer, std::size
     }
 }
 
-template <CanvasDrawable Canvas>
-void SWRenderer<Canvas>::Draw(float timeElapsed)
+template <CanvasDrawable Canvas> void SWRenderer<Canvas>::Draw(float timeElapsed)
 {
     stats.emplace_back(timeElapsed);
     if (stats.size() > 5)
@@ -286,7 +264,7 @@ void SWRenderer<Canvas>::Draw(float timeElapsed)
         for (int j = 0; j < 3; j++)
         {
             vsInput[j].SetDataDescriptor(programCtx->vsInputDesc);
-            for (auto &&d : programCtx->vsInputDesc)
+            for (auto&& d : programCtx->vsInputDesc)
             {
                 for (int k = 0; k < (int)d.type; k++)
                 {
@@ -298,16 +276,16 @@ void SWRenderer<Canvas>::Draw(float timeElapsed)
             {
                 v[j][i] = vsOutput[j].GetData(0, i, programCtx->vsOutputPosIdx);
             }
-            for (int i = 0; i < (int)programCtx->vsOutputUvType; i++)
+            if (programCtx->vsOutputsUv)
             {
-                if (programCtx->vsOutputsUv)
+                for (int i = 0; i < (int)programCtx->vsOutputUvType; i++)
                 {
                     uv[j][i] = vsOutput[j].GetData(0, i, programCtx->vsOutputUvIdx);
                 }
             }
-            for (int i = 0; i < (int)programCtx->vsOutputColorType; i++)
+            if (programCtx->vsOutputsColor)
             {
-                if (programCtx->vsOutputsColor)
+                for (int i = 0; i < (int)programCtx->vsOutputColorType; i++)
                 {
                     color[j][i] = vsOutput[j].GetData(0, i, programCtx->vsOutputColorIdx);
                 }
@@ -332,7 +310,8 @@ void SWRenderer<Canvas>::Draw(float timeElapsed)
 
         for (int j = 0; j < 3; j++)
         {
-            sv[j] = glm::vec3{(sv[j].x + canvasWidth / 2.f) / canvasWidth, (sv[j].y + canvasHeight / 2.f) / canvasHeight, v[j].z};
+            sv[j] = glm::vec3{(sv[j].x + canvasWidth / 2.f) / canvasWidth,
+                              (sv[j].y + canvasHeight / 2.f) / canvasHeight, v[j].z};
             rv[j] = glm::vec3{sv[j].x * width, (1.0 - sv[j].y) * height, sv[j].z};
         }
 
@@ -348,7 +327,6 @@ void SWRenderer<Canvas>::Draw(float timeElapsed)
             }
         }
 
-        // Some issue with this if block
         if (programCtx->vsOutputsColor)
         {
             for (int j = 0; j < 3; j++)
@@ -362,26 +340,25 @@ void SWRenderer<Canvas>::Draw(float timeElapsed)
         }
 
         triangleList[i / 3] = Triangle{rv[0], rv[1], rv[2], vsOutput};
-
     }
-    triangleList.erase(std::remove_if(std::begin(triangleList), std::end(triangleList), [](const Triangle &t)
-                                      { return !t.isValid; }),
-                       std::end(triangleList));
+
+    triangleList.erase(
+        std::remove_if(std::begin(triangleList), std::end(triangleList), [](const Triangle& t) { return !t.isValid; }),
+        std::end(triangleList));
+
     // for cache friendly
-    // std::sort(std::begin(triangleList), std::end(triangleList), [](const Triangle &a, const Triangle &b)
-    //           { return a.avg < b.avg; });
+    std::sort(std::begin(triangleList), std::end(triangleList),
+              [](const Triangle& a, const Triangle& b) { return a.avg < b.avg; });
 
     std::vector<glm::vec3> pixelSubsamples{};
     std::vector<int> colorMasks{};
     std::vector<int> samplesInTriangle;
     std::vector<std::tuple<glm::vec4, float>> colors{
-        GetNumberOfSubsamples(),
-        std::make_tuple(glm::vec4{}, std::numeric_limits<float>::infinity())
-    };
+        GetNumberOfSubsamples(), std::make_tuple(glm::vec4{}, std::numeric_limits<float>::infinity())};
     colorMasks.resize(GetNumberOfSubsamples(), 0);
     pixelSubsamples.reserve(GetNumberOfSubsamples());
     samplesInTriangle.reserve(GetNumberOfSubsamples());
-    
+
     for (int y = 0; y < height; y++)
     {
 #ifndef _DEBUG
@@ -394,8 +371,8 @@ void SWRenderer<Canvas>::Draw(float timeElapsed)
             colorMasks.assign(colorMasks.size(), 0);
             colors.assign(colors.size(), std::make_tuple(glm::vec4{}, std::numeric_limits<float>::infinity()));
             GenerateSubsamples(pt, pixelSubsamples);
-            
-            for (auto &&tri : triangleList)
+
+            for (auto&& tri : triangleList)
             {
                 if (!tri.InRange(pt))
                 {
@@ -404,7 +381,7 @@ void SWRenderer<Canvas>::Draw(float timeElapsed)
 
                 auto hasSubsample = !tri.PixelInTriangle(pt);
                 auto& subsamples = pixelSubsamples;
-                
+
                 if (!hasSubsample)
                 {
                     subsamples.clear();
@@ -414,7 +391,7 @@ void SWRenderer<Canvas>::Draw(float timeElapsed)
                 samplesInTriangle.clear();
                 for (int i = 0; i < subsamples.size(); i++)
                 {
-                    auto &subsample = subsamples[i];
+                    auto& subsample = subsamples[i];
                     if (!tri.PointInTriangle(subsample))
                     {
                         continue;
@@ -435,7 +412,7 @@ void SWRenderer<Canvas>::Draw(float timeElapsed)
 
                 for (int id = 0; id < programCtx->psInputDesc.size(); id++)
                 {
-                    auto &&d = programCtx->psInputDesc[id];
+                    auto&& d = programCtx->psInputDesc[id];
                     glm::vec4 tmpVal[3];
                     for (int j = 0; j < 3; j++)
                     {
@@ -465,7 +442,7 @@ void SWRenderer<Canvas>::Draw(float timeElapsed)
 
                 for (auto sampleIndex : samplesInTriangle)
                 {
-                    auto &[colorUnderLayer, depthUnderLayer] = colors[sampleIndex];
+                    auto& [colorUnderLayer, depthUnderLayer] = colors[sampleIndex];
 
                     if (depthTestEnabled && depthUnderLayer < depth)
                     {
@@ -488,18 +465,19 @@ void SWRenderer<Canvas>::Draw(float timeElapsed)
 
             float finalDepth = 0;
             glm::vec4 finalColor{};
-            float sampleWeight = 1.f / static_cast<float>(std::accumulate(std::begin(colorMasks), std::end(colorMasks), 0));
+            float sampleWeight =
+                1.f / static_cast<float>(std::accumulate(std::begin(colorMasks), std::end(colorMasks), 0));
             float sampleCoverage = 1.f / static_cast<float>(colors.size());
 
             for (int i = 0; i < colors.size(); i++)
             {
-                auto &color = colors[i];
-                auto &colorMask = colorMasks[i];
+                auto& color = colors[i];
+                auto& colorMask = colorMasks[i];
                 if (colorMask == 0)
                 {
                     continue;
                 }
-                auto &[sampleColor, depth] = color;
+                auto& [sampleColor, depth] = color;
 
                 finalColor += (sampleColor * glm::vec4{sampleWeight, sampleWeight, sampleWeight, sampleCoverage});
                 finalDepth += (depth * sampleWeight);
@@ -520,12 +498,15 @@ void SWRenderer<Canvas>::Draw(float timeElapsed)
     {
         for (int x = 0; x < width; x++)
         {
-            canvas.Buffer()[(height - y - 1) * width * 4 + x * 4 + 0] = (std::uint8_t)std::clamp(colorBuffer.get()[y * width * 4 + x * 4 + 0] * 255.f, 0.f, 255.f);
-            canvas.Buffer()[(height - y - 1) * width * 4 + x * 4 + 1] = (std::uint8_t)std::clamp(colorBuffer.get()[y * width * 4 + x * 4 + 1] * 255.f, 0.f, 255.f);
-            canvas.Buffer()[(height - y - 1) * width * 4 + x * 4 + 2] = (std::uint8_t)std::clamp(colorBuffer.get()[y * width * 4 + x * 4 + 2] * 255.f, 0.f, 255.f);
-            canvas.Buffer()[(height - y - 1) * width * 4 + x * 4 + 3] = (std::uint8_t)std::clamp(colorBuffer.get()[y * width * 4 + x * 4 + 3] * 255.f, 0.f, 255.f);
+            canvas.Buffer()[(height - y - 1) * width * 4 + x * 4 + 0] =
+                (std::uint8_t)std::clamp(colorBuffer.get()[y * width * 4 + x * 4 + 0] * 255.f, 0.f, 255.f);
+            canvas.Buffer()[(height - y - 1) * width * 4 + x * 4 + 1] =
+                (std::uint8_t)std::clamp(colorBuffer.get()[y * width * 4 + x * 4 + 1] * 255.f, 0.f, 255.f);
+            canvas.Buffer()[(height - y - 1) * width * 4 + x * 4 + 2] =
+                (std::uint8_t)std::clamp(colorBuffer.get()[y * width * 4 + x * 4 + 2] * 255.f, 0.f, 255.f);
+            canvas.Buffer()[(height - y - 1) * width * 4 + x * 4 + 3] =
+                (std::uint8_t)std::clamp(colorBuffer.get()[y * width * 4 + x * 4 + 3] * 255.f, 0.f, 255.f);
         }
     }
-
     canvas.AddText(0, 0, 12, std::to_string(1.0 / avgTime), 0xFFFFFFFF);
 }

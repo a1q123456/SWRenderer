@@ -16,9 +16,9 @@ struct ProgramContext
     int vsOutputPosIdx = 0;
     int vsOutputUvIdx = 0;
     int vsOutputColorIdx = 0;
-    VertexAttributeTypes vsOutputPosType;
-    VertexAttributeTypes vsOutputUvType;
-    VertexAttributeTypes vsOutputColorType;
+    VertexAttributeTypes vsOutputPosType = VertexAttributeTypes::Float;
+    VertexAttributeTypes vsOutputUvType = VertexAttributeTypes::Float;
+    VertexAttributeTypes vsOutputColorType = VertexAttributeTypes::Float;
     std::vector<VertexDataDescriptor> vsInputDesc;
     std::vector<VertexDataDescriptor> vsOutputDesc;
     std::vector<VertexDataDescriptor> psInputDesc;
