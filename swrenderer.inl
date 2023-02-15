@@ -29,6 +29,7 @@ template <CanvasDrawable Canvas> void SWRenderer<Canvas>::CreateBuffer(EPixelFor
 {
     zBuffer.reset(new float[width * height]);
     colorBuffer.reset(new float[width * height * 4]);
+    memset(colorBuffer.get(), 0, width * height * 4);
 }
 
 struct Triangle
@@ -66,7 +67,7 @@ struct Triangle
         return pt.x >= min.x && pt.y >= min.y && pt.x <= max.x && pt.y <= max.y;
     }
 
-    glm::vec3 Barycentric(const glm::vec3& pt)
+    glm::vec3 Barycentric(const glm::vec3& pt) const
     {
         glm::vec3 a{p0};
         glm::vec3 b{p1};
@@ -94,20 +95,7 @@ struct Triangle
         return ret;
     }
 
-    bool PixelInTriangle(const glm::vec3& pt)
-    {
-        glm::vec3 pts[4];
-        pts[0] = pt + glm::vec3{0.5, 0.5, 0};
-        pts[1] = pt + glm::vec3{-0.5, 0.5, 0};
-        pts[2] = pt + glm::vec3{-0.5, -0.5, 0};
-        pts[3] = pt + glm::vec3{0.5, -0.5, 0};
-
-        auto weights = pts | std::views::transform([&](auto&& pt) { return Barycentric(pt); });
-        return std::ranges::all_of(std::ranges::begin(weights), std::ranges::end(weights),
-                                   [](auto&& weight) { return weight.x >= 0 && weight.y >= 0 && weight.z >= 0; });
-    }
-
-    bool PointInTriangle(const glm::vec3& pt)
+    bool PointInTriangle(const glm::vec3& pt) const
     {
         auto weight = Barycentric(pt);
         return weight.x >= 0 && weight.y >= 0 && weight.z >= 0;
@@ -358,6 +346,7 @@ template <CanvasDrawable Canvas> void SWRenderer<Canvas>::Draw(float timeElapsed
     colorMasks.resize(GetNumberOfSubsamples(), 0);
     pixelSubsamples.reserve(GetNumberOfSubsamples());
     samplesInTriangle.reserve(GetNumberOfSubsamples());
+    float sampleCoverage = 1.f / static_cast<float>(colors.size());
 
     for (int y = 0; y < height; y++)
     {
@@ -379,29 +368,26 @@ template <CanvasDrawable Canvas> void SWRenderer<Canvas>::Draw(float timeElapsed
                     continue;
                 }
 
-                auto hasSubsample = !tri.PixelInTriangle(pt);
-                auto& subsamples = pixelSubsamples;
-
-                if (!hasSubsample)
-                {
-                    subsamples.clear();
-                    subsamples.emplace_back(pt);
-                }
-
                 samplesInTriangle.clear();
-                for (int i = 0; i < subsamples.size(); i++)
+                for (int i = 0; i < pixelSubsamples.size(); i++)
                 {
-                    auto& subsample = subsamples[i];
-                    if (!tri.PointInTriangle(subsample))
+                    auto& subsample = pixelSubsamples[i];
+                    if (tri.PointInTriangle(subsample))
                     {
-                        continue;
+                        samplesInTriangle.emplace_back(i);
                     }
-                    samplesInTriangle.emplace_back(i);
                 }
 
                 if (samplesInTriangle.empty())
                 {
                     continue;
+                }
+
+                bool hasSubsample = samplesInTriangle.size() != pixelSubsamples.size();
+                if (!hasSubsample)
+                {
+                    samplesInTriangle.clear();
+                    samplesInTriangle.push_back(0);
                 }
 
                 glm::vec3 weight = tri.Barycentric(pt);
@@ -467,7 +453,6 @@ template <CanvasDrawable Canvas> void SWRenderer<Canvas>::Draw(float timeElapsed
             glm::vec4 finalColor{};
             float sampleWeight =
                 1.f / static_cast<float>(std::accumulate(std::begin(colorMasks), std::end(colorMasks), 0));
-            float sampleCoverage = 1.f / static_cast<float>(colors.size());
 
             for (int i = 0; i < colors.size(); i++)
             {
@@ -498,14 +483,15 @@ template <CanvasDrawable Canvas> void SWRenderer<Canvas>::Draw(float timeElapsed
     {
         for (int x = 0; x < width; x++)
         {
+            auto alpha = colorBuffer[y * width * 4 + x * 4 + 3];
             canvas.Buffer()[(height - y - 1) * width * 4 + x * 4 + 0] =
-                (std::uint8_t)std::clamp(colorBuffer.get()[y * width * 4 + x * 4 + 0] * 255.f, 0.f, 255.f);
+                (std::uint8_t)std::clamp(colorBuffer[y * width * 4 + x * 4 + 0] * 255.f * alpha, 0.f, 255.f);
             canvas.Buffer()[(height - y - 1) * width * 4 + x * 4 + 1] =
-                (std::uint8_t)std::clamp(colorBuffer.get()[y * width * 4 + x * 4 + 1] * 255.f, 0.f, 255.f);
+                (std::uint8_t)std::clamp(colorBuffer[y * width * 4 + x * 4 + 1] * 255.f * alpha, 0.f, 255.f);
             canvas.Buffer()[(height - y - 1) * width * 4 + x * 4 + 2] =
-                (std::uint8_t)std::clamp(colorBuffer.get()[y * width * 4 + x * 4 + 2] * 255.f, 0.f, 255.f);
+                (std::uint8_t)std::clamp(colorBuffer[y * width * 4 + x * 4 + 2] * 255.f * alpha, 0.f, 255.f);
             canvas.Buffer()[(height - y - 1) * width * 4 + x * 4 + 3] =
-                (std::uint8_t)std::clamp(colorBuffer.get()[y * width * 4 + x * 4 + 3] * 255.f, 0.f, 255.f);
+                (std::uint8_t)std::clamp(alpha * 255.f, 0.f, 255.f);
         }
     }
     canvas.AddText(0, 0, 12, std::to_string(1.0 / avgTime), 0xFFFFFFFF);

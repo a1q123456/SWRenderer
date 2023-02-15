@@ -36,7 +36,6 @@ struct ProgramContext
 template<CanvasDrawable TCanvas>
 class SWRenderer
 {
-    static constexpr auto DEPTH_THRESHOLD = 0.01;
     TCanvas canvas;
     int width = 500;
     int height = 500;

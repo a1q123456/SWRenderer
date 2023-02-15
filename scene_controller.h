@@ -19,11 +19,13 @@ class SceneController
     PointLight pointLight;
     AmbientLight ambientLight;
     float cameraDistance = 3.f;
-    glm::vec3 cubeRotation = glm::vec3{0, 0, 0};
+    glm::vec3 cubeRotation = glm::vec3{-0.159999922, 0.0300000049, 0.0300000049};
     NativeWindowHandle hwnd = 0;
     bool mouseCaptured = false;
     int lastMouseX = -1;
     int lastMouseY = -1;
+    int mouseX = -1;
+    int mouseY = -1;
 
     glm::mat4 projectionMatrix;
     SWRenderer<TCanvas> renderer;

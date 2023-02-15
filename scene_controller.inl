@@ -76,6 +76,8 @@ SceneController<Canvas>::SceneController(T&& canvas) : width(canvas.Width()), he
     float zNear = 0.01;
     float zFar = 1000;
 
+    renderer.SetMultiSampleLevel(2);
+
     projectionMatrix = glm::perspective(glm::radians(55.f), aspectRatio, zNear, zFar);
     renderer.ProjectionMatrix(projectionMatrix);
 
@@ -126,6 +128,7 @@ void SceneController<Canvas>::Render(float timeElapsed)
     pixelProgram.SetViewPosition(cameraPos);
     renderer.Canvas().SwapBuffer();
     renderer.Draw(timeElapsed);
+    renderer.Canvas().AddText(0, 24, 12, std::format("x: {}, y: {}", mouseX, mouseY), 0xFFFFFFFF);
 
     // for (int i = 0; i < 300; i++)
     // {
@@ -170,6 +173,8 @@ void SceneController<Canvas>::MouseWheel(int val)
 template<CanvasDrawable Canvas>
 void SceneController<Canvas>::MouseMove(int x, int y)
 {
+    mouseX = x;
+    mouseY = y;
     if (!mouseCaptured)
     {
         return;

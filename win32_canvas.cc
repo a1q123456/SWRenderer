@@ -71,9 +71,10 @@ void Win32Canvas::AddText(int x, int y, int size, const TString &str, std::uint3
     auto old = ::SelectObject(memCompatiableDc, bitmap[currentBufferIndex]);
     HPEN hPen = CreatePen(PS_SOLID, 1, color & 0x00FFFFFF);
     auto oldPen = ::SelectObject(memCompatiableDc, hPen);
-    ::MoveToEx(memCompatiableDc, x, y, nullptr);
     RECT rect;
     ZeroMemory(&rect, sizeof(rect));
+    rect.left = x;
+    rect.top = y;
     ::DrawText(memCompatiableDc, str.c_str(), str.size(), &rect, DT_CALCRECT);
     ::DrawText(memCompatiableDc, str.c_str(), str.size(), &rect, DT_LEFT);
     SelectObject(memCompatiableDc, oldPen);
