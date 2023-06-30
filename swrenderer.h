@@ -1,5 +1,5 @@
 #pragma once
-#include "icanvas.h"
+#include "platform_defines.h"
 #include "shading/light/light.h"
 #include "shading/vertex_program.h"
 #include "shading/pixel_program.h"
@@ -11,7 +11,7 @@
 #include "shading/material/blinn_material.h"
 #include "pixel_format.h"
 
-struct ProgramContext
+struct SWRendererProgramContext
 {
     int vsOutputPosIdx = 0;
     int vsOutputUvIdx = 0;
@@ -33,10 +33,9 @@ struct ProgramContext
     std::map<int, int> psVsIndexMap;
 };
 
-template<CanvasDrawable TCanvas>
 class SWRenderer
 {
-    TCanvas canvas;
+    CanvasType canvas;
     int width = 500;
     int height = 500;
     int multisampleLevel = 0;
@@ -51,24 +50,27 @@ class SWRenderer
     glm::mat4 projectionMatrix;
 
     ModelData *modelData = nullptr;
-    ProgramContext* programCtx = nullptr;
+    SWRendererProgramContext* programCtx = nullptr;
 
     std::list<float> stats;
 public:
-    static ProgramContext LinkProgram(
+
+    using ProgramContextType = SWRendererProgramContext;
+
+    static SWRenderer::ProgramContextType LinkProgram(
         pro::proxy<VertexShaderFacade> vp,
         pro::proxy<PixelShaderFacade> pp) noexcept;
 
     void CreateBuffer(EPixelFormat pixelFormat);
-    template<CanvasDrawable T>
-    SWRenderer(T&& canvas);
+
+    SWRenderer(CanvasType&& canvas);
     SWRenderer(const SWRenderer &) = delete;
     SWRenderer &operator=(const SWRenderer &) = delete;
 
     std::unique_ptr<float[]>& GetColorBuffer() noexcept { return colorBuffer; }
     void ClearZBuffer();
     void ClearColorBuffer(std::uint32_t color);
-    void SetProgram(ProgramContext& programCtx);
+    void SetProgram(SWRendererProgramContext& programCtx);
     void SetMesh(ModelData &mesh);
     void SetViewMatrix(const glm::mat4 &view);
     void ProjectionMatrix(const glm::mat4 &proj);
@@ -85,5 +87,3 @@ private:
     void GenerateSubsamples(glm::vec3 pt, std::vector<glm::vec3>& subsamples);
     void ClearBuffer(std::unique_ptr<float[]>& buffer, std::size_t nElement, float value);
 };
-
-#include "swrenderer.inl"

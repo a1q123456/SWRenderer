@@ -43,3 +43,5 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include <proxy/proxy.h>
 #include <format>
+#include <cuda.h>
+#include <cuda_runtime_api.h>

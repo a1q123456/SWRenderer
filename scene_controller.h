@@ -1,14 +1,16 @@
 #pragma once
-#include "icanvas.h"
+#include "platform_defines.h"
 #include "swrenderer.h"
+#include "raytracing_renderer.h"
 #include "shading/material/simple_vertex_program.h"
 #include "shading/material/blinn_material.h"
 #include "native_window_handle.h"
 #include "pixel_format.h"
 
-template<CanvasDrawable TCanvas>
 class SceneController
 {
+    using RendererType = RayTracingRenderer;
+
     int width = 500;
     int height = 500;
 
@@ -28,15 +30,14 @@ class SceneController
     int mouseY = -1;
 
     glm::mat4 projectionMatrix;
-    SWRenderer<TCanvas> renderer;
+    RendererType renderer;
     BlinnMaterial pixelProgram;
     SimpleVertexProgram vertexProgram;
     ModelData modelData;
-    ProgramContext programCtx;
+    RendererType::ProgramContextType programCtx;
 
 public:
-    template<CanvasDrawable T>
-    SceneController(T&&);
+    SceneController(CanvasType&& canvas);
     
     void CreateBuffer(EPixelFormat pixelFormat) { renderer.CreateBuffer(pixelFormat); }
     void SetHWND(NativeWindowHandle hwnd);
@@ -56,5 +57,3 @@ public:
         return renderer.Canvas();
     }
 };
-
-#include "scene_controller.inl"

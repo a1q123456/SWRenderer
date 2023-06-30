@@ -1,58 +1,57 @@
 #include "raytracing_renderer.h"
 #include "utils.h"
 
-void RayTracingRenderer::Render()
+RayTracingRenderer::RayTracingRenderer(CanvasType&& canvas) : 
+    canvas(std::move(canvas)), 
+    width(this->canvas.Width()), 
+    height(this->canvas.Height())
 {
-    auto width = 500;
-    auto height = 500;
+}
 
-    // for (int y = 0; y < height; y++)
-    // {
-    //     for (int x = 0; x < width; x++)
-    //     {
-    //         Ray ray
-    //         {
-    //             glm::vec3{0, 0, 0},
-    //             glm::normalize(
-    //                 glm::vec3{x, y, viewMatrix[0][0]} - glm::vec3{width / 2, height / 2, 0.0}
-    //             )
-    //         };
-    //         for (auto& triangle : trangleList)
-    //         {
-    //             glm::vec3 pos;
-    //             if (ray.tryIntersect(triangle, pos))
-    //             {
-    //                 auto barycentric = triangle.barycentric(pos);
+void RayTracingRenderer::CreateBuffer(EPixelFormat pixelFormat)
+{
+}
 
-    //                 for (auto& light : lightList)
-    //                 {
-    //                     std::vector<LightSample> sampleList;
-    //                     if (light.hasArea)
-    //                     {
-    //                         sampleList.emplace_back(light.CreateSamplePoints(pos));
-    //                     }
-    //                     else
-    //                     {
-    //                         sampleList.emplace_back(light.sample);
-    //                     }
-    //                     std::vector<LightSample> visibleSamples;
-    //                     auto sampleIntensityView = sampleList | std::views::filter([&](auto&& sample) -> bool
-    //                     {
-    //                         return trangleList | std::views::all([&](auto&& tri)
-    //                         {
-    //                             return !tri.hasIntersection(Segment{sample.pos, pos});
-    //                         });
-    //                     });
-    //                     std::ranges::copy(sampleIntensityView, std::back_inserter(visibleSamples));
-    //                     auto intensity = std::accumulate(std::begin(visibleSamples), std::end(visibleSamples), 0.0, [](double a, auto&& sample)
-    //                     {
-    //                         return a + sample.intensity;
-    //                     });
+void RayTracingRenderer::SetProgram(RayTracingRenderer::ProgramContextType& programCtx)
+{
+}
 
+void RayTracingRenderer::SetMesh(ModelData& mesh)
+{
+}
 
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
+void RayTracingRenderer::ClearZBuffer()
+{
+}
+
+void RayTracingRenderer::ClearColorBuffer(std::uint32_t color)
+{
+}
+
+void RayTracingRenderer::Draw(float timeElapsed)
+{
+}
+
+CanvasType& RayTracingRenderer::Canvas()
+{
+    return canvas;
+}
+
+void RayTracingRenderer::SetMultiSampleLevel(int msaa)
+{
+}
+
+void RayTracingRenderer::ProjectionMatrix(glm::mat4x4 proj)
+{
+}
+
+RayTracingRenderer::ProgramContextType RayTracingRenderer::LinkProgram(pro::proxy<VertexShaderFacade> vp,
+                                                                        pro::proxy<PixelShaderFacade> pp) noexcept
+{
+    return RayTracingRenderer::ProgramContextType{};
+}
+
+glm::vec4 RayTracingRenderer::RenderRay(int x, int y)
+{
+    return {};
 }

@@ -1,8 +1,8 @@
 #include "headless_canvas.h"
 
-HeadlessCanvas::HeadlessCanvas(const HeadlessWindow& window) : 
-    width(window.Width()), 
-    height(window.Height())
+HeadlessCanvas::HeadlessCanvas(int w, int h) : 
+    width(w), 
+    height(h)
 {
     buffer = new std::uint8_t[width * height * 4];
 }

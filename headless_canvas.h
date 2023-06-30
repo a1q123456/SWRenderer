@@ -1,11 +1,10 @@
 #pragma once
 #include "tstring.h"
-#include "headless_window.h"
 
 class HeadlessCanvas
 {
 public:
-    HeadlessCanvas(const HeadlessWindow& window);
+    HeadlessCanvas(int w, int h);
     void Clear(std::uint32_t color) noexcept;
     void LineTo(int x0, int y0, int x1, int y1, std::uint32_t color) noexcept;
     void AddText(int, int, int, const TString& text, std::uint32_t color) noexcept;

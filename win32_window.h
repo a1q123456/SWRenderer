@@ -15,7 +15,7 @@ class Win32Window
     int width = 1000;
     int height = 1000;
     HDC mHdc;
-    std::unique_ptr<SceneController<Win32Canvas>> scene;
+    std::unique_ptr<SceneController> scene;
     std::chrono::steady_clock::time_point lastTime = std::chrono::steady_clock::now();
     static LRESULT CALLBACK WndProc(
         _In_ HWND hWnd,

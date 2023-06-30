@@ -1,12 +1,15 @@
 cmake_minimum_required(VERSION 3.17)
 
-project(swengine)
+project(swengine LANGUAGES CUDA CXX)
 
 add_executable(swengine WIN32  
 "main.cc" 
 "stbi.cc"
 "pixel_format.cc"
-"headless_window.cc"
+"swrenderer.cc"
+"scene_controller.cc"
+"raytracing_renderer.cc"
+"raytracing_kernels.cu"
 "headless_canvas.cc"
 "model/model_data.cc" 
 "shading/material/simple_vertex_program.cc"
@@ -27,18 +30,20 @@ endif()
 
 target_compile_definitions(swengine PRIVATE NOMINMAX)
 target_precompile_headers(swengine PRIVATE pch.h)
+
 find_package(glm CONFIG REQUIRED)
 target_link_libraries(swengine PRIVATE glm::glm)
 find_package(Stb REQUIRED)
-target_include_directories(swengine PRIVATE Stb_INCLUDE_DIR ${PROJECT_SOURCE_DIR})
-target_compile_options(swengine PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/openmp /std:c++latest>)
+target_include_directories(swengine PRIVATE Stb_INCLUDE_DIR ${PROJECT_SOURCE_DIR} ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+target_compile_options(swengine PRIVATE $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<COMPILE_LANGUAGE:CXX>>:/openmp>)
+target_compile_options(swengine PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:--diag-suppress 20012>)
+target_compile_definitions(swengine PRIVATE $<BOOL:${WIN32}>:WIN32>)
 find_package(proxy CONFIG REQUIRED)
 target_link_libraries(swengine PRIVATE msft_proxy)
-
-if (NOT WIN32)
-    set_target_properties(swengine PROPERTIES
-        CXX_STANDARD 20
-        CXX_STANDARD_REQUIRED ON
-    )
-endif()
+set_target_properties(swengine PROPERTIES
+    CXX_STANDARD 20
+    CXX_STANDARD_REQUIRED ON
+    CUDA_STANDARD 11
+    CUDA_STANDARD_REQUIRED ON
+)
 
