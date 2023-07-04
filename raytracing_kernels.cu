@@ -1,10 +1,11 @@
 #include "raytracing_kernels.h"
 
-__device__ void float4_to_byte3(glm::vec4 src, std::uint8_t* dst)
+__device__ void float4_to_byte4(glm::vec4 src, std::uint8_t* dst)
 {
-    dst[0] = glm::clamp(src.r * 255.f, 0.f, 255.f);
+    dst[0] = glm::clamp(src.b * 255.f, 0.f, 255.f);
     dst[1] = glm::clamp(src.g * 255.f, 0.f, 255.f);
-    dst[2] = glm::clamp(src.b * 255.f, 0.f, 255.f);
+    dst[2] = glm::clamp(src.r * 255.f, 0.f, 255.f);
+    dst[3] = glm::clamp(src.a * 255.f, 0.f, 255.f);
 }
 
 __device__ Ray generateRay(glm::mat4x4 iproj, glm::mat4x4 iviewTransform, int w, int h)
@@ -34,9 +35,7 @@ __global__ void renderRay(glm::mat4x4 iproj, glm::mat4x4 iviewTransform, int w, 
     int x = threadIdx.x + blockIdx.x * blockDim.x;
     int y = threadIdx.y + blockIdx.y * blockDim.y;
 
-    dst[y * w * 4 + x * 4 + 0] = 0;
-    dst[y * w * 4 + x * 4 + 1] = 0;
-    dst[y * w * 4 + x * 4 + 2] = 255;
+    float4_to_byte4(glm::vec4{1, 0, 0, 1}, dst + y * w * 4 + x * 4);
 }
 
 cudaError_t renderFrame(glm::mat4x4 iproj, glm::mat4x4 iviewTransform, int w, int h, std::uint8_t* dst)
