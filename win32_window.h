@@ -12,8 +12,8 @@ class Win32Window
     TString mWin32WindowClass;
     HWND hWnd;
     WNDCLASSEX mWcex;
-    int width = 1000;
-    int height = 1000;
+    int width = 1024;
+    int height = 1024;
     HDC mHdc;
     std::unique_ptr<SceneController> scene;
     std::chrono::steady_clock::time_point lastTime = std::chrono::steady_clock::now();

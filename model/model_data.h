@@ -24,7 +24,7 @@ public:
     template <typename T>
     T GetVertexData(int index, VertexAttributes attr) const noexcept
     {
-        return dataPack.GetData<T>(indexData[index], attr);
+        return dataPack.template GetData<T>(indexData[index], attr);
     }
 
     float GetVertexData(int index, int nItem, VertexAttributes attr) const noexcept
@@ -76,4 +76,4 @@ bool BaseModelData<Allocator>::HasAttribute(VertexAttributes attr) const noexcep
 }
 
 using ModelData = BaseModelData<std::allocator>;
-using CudaModelData = BaseModelData<CudaAllocator>;
+using CudaModelData = BaseModelData<CudaManagedAllocator>;

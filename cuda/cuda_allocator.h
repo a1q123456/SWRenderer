@@ -1,21 +1,21 @@
 #pragma once
 
-template <typename T> class CudaAllocator
+template <typename T> class CudaManagedAllocator
 {
 public:
     using value_type = T;
     using is_always_equal = std::true_type;
 
-    CudaAllocator() = default;
+    CudaManagedAllocator() = default;
 
-    template <typename U> constexpr CudaAllocator(const CudaAllocator<U>&) noexcept
+    template <typename U> constexpr CudaManagedAllocator(const CudaManagedAllocator<U>&) noexcept
     {
     }
 
     [[nodiscard]] constexpr T* allocate(std::size_t n)
     {
         void* ret = nullptr;
-        auto err = cudaMalloc(&ret, n * sizeof(T));
+        auto err = cudaMallocManaged(&ret, n * sizeof(T));
         if (err != cudaSuccess)
         {
             throw std::bad_alloc{};
@@ -29,12 +29,12 @@ public:
     }
 };
 
-template <typename T> bool operator==(const CudaAllocator<T>& a, const CudaAllocator<T>& b)
+template <typename T> bool operator==(const CudaManagedAllocator<T>& a, const CudaManagedAllocator<T>& b)
 {
     return true;
 }
 
-template <typename T> bool operator!=(const CudaAllocator<T>& a, const CudaAllocator<T>& b)
+template <typename T> bool operator!=(const CudaManagedAllocator<T>& a, const CudaManagedAllocator<T>& b)
 {
     return false;
 }

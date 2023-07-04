@@ -11,19 +11,20 @@ RayTracingRenderer::RayTracingRenderer(CanvasType&& canvas) :
 
 void RayTracingRenderer::CreateBuffer(EPixelFormat pixelFormat)
 {
-    cudaMalloc(reinterpret_cast<void**>(&colorBuffer), width * height * sizeof(float) * 4);
-    cudaMalloc(reinterpret_cast<void**>(&depthBuffer), width * height * sizeof(float));
-    cudaMemset(colorBuffer, 0, width * height * sizeof(float) * 4);
-    cudaMemset(depthBuffer, 0, width * height * sizeof(float));
+    colorBufferU8 = CudaNewArray<std::uint8_t>(width * height * 4);
+    depthBufferU8 = CudaNewArray<std::uint8_t>(width * height);
+    cudaMemset(colorBufferU8.get(), 0, width * height * sizeof(std::uint8_t) * 4);
+    cudaMemset(depthBufferU8.get(), 0, width * height * sizeof(std::uint8_t));
 }
 
 void RayTracingRenderer::SetProgram(RayTracingRenderer::ProgramContextType& programCtx)
 {
+    iviewMatrix = glm::identity<glm::mat4>();
 }
 
-void RayTracingRenderer::SetMesh(RayTracingRenderer::ModelDataType& mesh)
+void RayTracingRenderer::SetMesh(RayTracingRenderer::ModelDataType* mesh)
 {
-    modelData = &mesh;
+    modelData = mesh;
 }
 
 void RayTracingRenderer::ClearZBuffer()
@@ -36,10 +37,8 @@ void RayTracingRenderer::ClearColorBuffer(std::uint32_t color)
 
 void RayTracingRenderer::Draw(float timeElapsed)
 {
-    unsigned int numBlocks = 10;
-    dim3 threadsPerBlock(width / numBlocks, height / numBlocks);
-    dim3 grid{numBlocks, 1, 1};
-    cudaLaunchKernel(renderRay, grid, threadsPerBlock, nullptr, 0, nullptr);
+    CudaThrowIfFailed(renderFrame(iprojMatrix, iviewMatrix, width, height, colorBufferU8.get()));
+    CudaThrowIfFailed(cudaMemcpy(canvas.Buffer(), colorBufferU8.get(), width * height * 4, cudaMemcpyDeviceToHost));
 }
 
 CanvasType& RayTracingRenderer::Canvas()
@@ -53,6 +52,7 @@ void RayTracingRenderer::SetMultiSampleLevel(int msaa)
 
 void RayTracingRenderer::ProjectionMatrix(glm::mat4x4 proj)
 {
+    iprojMatrix = glm::inverse(proj);
 }
 
 RayTracingRenderer::ProgramContextType RayTracingRenderer::LinkProgram(pro::proxy<VertexShaderFacade> vp,

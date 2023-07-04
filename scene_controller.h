@@ -6,6 +6,7 @@
 #include "shading/material/blinn_material.h"
 #include "native_window_handle.h"
 #include "pixel_format.h"
+#include "cuda_utils.h"
 
 class SceneController
 {
@@ -33,7 +34,7 @@ class SceneController
     RendererType renderer;
     BlinnMaterial pixelProgram;
     SimpleVertexProgram vertexProgram;
-    RendererType::ModelDataType modelData;
+    CudaPointer<RendererType::ModelDataType> modelData;
     RendererType::ProgramContextType programCtx;
 
 public:

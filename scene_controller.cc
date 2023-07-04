@@ -85,10 +85,12 @@ SceneController::SceneController(CanvasType&& canvas) : width(canvas.Width()), h
         throw std::runtime_error(stbi_failure_reason());
     }
 
-    modelData.SetIndexList({std::cbegin(indexList), std::cend(indexList)});
-    modelData.SetVertexList({std::cbegin(vertexList), std::cend(vertexList)});
+    modelData = CudaNewManaged<RendererType::ModelDataType>();
 
-    modelData.SetVertexDescriptor({
+    modelData->SetIndexList({std::cbegin(indexList), std::cend(indexList)});
+    modelData->SetVertexList({std::cbegin(vertexList), std::cend(vertexList)});
+
+    modelData->SetVertexDescriptor({
         {VertexAttributes::Position, VertexAttributeTypes::Vec3},
         {VertexAttributes::TextureCoordinate, VertexAttributeTypes::Vec3},
         {VertexAttributes::Normal, VertexAttributeTypes::Vec3},
@@ -114,7 +116,7 @@ void SceneController::Render(float timeElapsed)
     auto rotationMatrix = glm::eulerAngleXYZ(0.f, 0.f, 0.f);
     auto modelTransform = translateMatrix * translateBackMatrix * rotationMatrix * scaleMatrix * translateOriginMatrix;
 
-    renderer.SetMesh(modelData);
+    renderer.SetMesh(modelData.get());
     renderer.SetProgram(programCtx);
     renderer.ClearColorBuffer(argb(0xFF, 0xFF, 0xFF, 0xFF));
     // renderer.ClearColorBuffer(argb(0x00, 0x00, 0x00, 0x00));

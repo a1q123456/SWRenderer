@@ -71,7 +71,7 @@ public:
     void ClearZBuffer();
     void ClearColorBuffer(std::uint32_t color);
     void SetProgram(SWRendererProgramContext& programCtx);
-    void SetMesh(ModelData &mesh);
+    void SetMesh(ModelData* mesh);
     void SetViewMatrix(const glm::mat4 &view);
     void ProjectionMatrix(const glm::mat4 &proj);
     void Draw(float timeElapsed);

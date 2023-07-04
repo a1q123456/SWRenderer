@@ -159,9 +159,9 @@ void SWRenderer::SetProgram(SWRendererProgramContext& programCtx)
     this->programCtx = &programCtx;
 }
 
-void SWRenderer::SetMesh(ModelData& mesh)
+void SWRenderer::SetMesh(ModelData* mesh)
 {
-    modelData = &mesh;
+    modelData = mesh;
 }
 
 void SWRenderer::SetViewMatrix(const glm::mat4& view)

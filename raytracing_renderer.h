@@ -4,6 +4,7 @@
 #include "pixel_format.h"
 #include "shading/vertex_program.h"
 #include "shading/pixel_program.h"
+#include "cuda_utils.h"
 
 class RayTracingProgramContext
 {
@@ -20,7 +21,7 @@ public:
 
     void CreateBuffer(EPixelFormat pixelFormat);
     void SetProgram(ProgramContextType& programCtx);
-    void SetMesh(ModelDataType &mesh);
+    void SetMesh(ModelDataType* mesh);
     void ClearZBuffer();
     void ClearColorBuffer(std::uint32_t color);
     void Draw(float timeElapsed);
@@ -34,11 +35,12 @@ public:
         pro::proxy<PixelShaderFacade> pp) noexcept;
 
 private:
-    float* colorBuffer;
-    float* depthBuffer;
+    CudaPointer<std::uint8_t[]> colorBufferU8;
+    CudaPointer<std::uint8_t[]> depthBufferU8;
     CanvasType canvas;
     int width = 0;
     int height = 0;
-    glm::mat4 viewMatrix;
+    glm::mat4 iviewMatrix;
+    glm::mat4 iprojMatrix;
     ModelDataType* modelData = nullptr;
 };
