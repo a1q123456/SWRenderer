@@ -1,5 +1,6 @@
 #include "raytracing_renderer.h"
 #include "utils.h"
+#include "raytracing_kernels.h"
 
 RayTracingRenderer::RayTracingRenderer(CanvasType&& canvas) : 
     canvas(std::move(canvas)), 
@@ -10,14 +11,19 @@ RayTracingRenderer::RayTracingRenderer(CanvasType&& canvas) :
 
 void RayTracingRenderer::CreateBuffer(EPixelFormat pixelFormat)
 {
+    cudaMalloc(reinterpret_cast<void**>(&colorBuffer), width * height * sizeof(float) * 4);
+    cudaMalloc(reinterpret_cast<void**>(&depthBuffer), width * height * sizeof(float));
+    cudaMemset(colorBuffer, 0, width * height * sizeof(float) * 4);
+    cudaMemset(depthBuffer, 0, width * height * sizeof(float));
 }
 
 void RayTracingRenderer::SetProgram(RayTracingRenderer::ProgramContextType& programCtx)
 {
 }
 
-void RayTracingRenderer::SetMesh(ModelData& mesh)
+void RayTracingRenderer::SetMesh(RayTracingRenderer::ModelDataType& mesh)
 {
+    modelData = &mesh;
 }
 
 void RayTracingRenderer::ClearZBuffer()
@@ -30,6 +36,10 @@ void RayTracingRenderer::ClearColorBuffer(std::uint32_t color)
 
 void RayTracingRenderer::Draw(float timeElapsed)
 {
+    unsigned int numBlocks = 10;
+    dim3 threadsPerBlock(width / numBlocks, height / numBlocks);
+    dim3 grid{numBlocks, 1, 1};
+    cudaLaunchKernel(renderRay, grid, threadsPerBlock, nullptr, 0, nullptr);
 }
 
 CanvasType& RayTracingRenderer::Canvas()
@@ -49,9 +59,4 @@ RayTracingRenderer::ProgramContextType RayTracingRenderer::LinkProgram(pro::prox
                                                                         pro::proxy<PixelShaderFacade> pp) noexcept
 {
     return RayTracingRenderer::ProgramContextType{};
-}
-
-glm::vec4 RayTracingRenderer::RenderRay(int x, int y)
-{
-    return {};
 }

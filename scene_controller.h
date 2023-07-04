@@ -33,7 +33,7 @@ class SceneController
     RendererType renderer;
     BlinnMaterial pixelProgram;
     SimpleVertexProgram vertexProgram;
-    ModelData modelData;
+    RendererType::ModelDataType modelData;
     RendererType::ProgramContextType programCtx;
 
 public:

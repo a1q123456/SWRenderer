@@ -8,8 +8,8 @@ constexpr size_t count_of(const T(& arr)[N])
 
 struct Ray
 {
-    glm::vec3 startPos;
     glm::vec3 direction;
+    glm::vec3 origin;
 };
 
 constexpr std::uint32_t argb(std::uint8_t r, std::uint8_t g, std::uint8_t b, std::uint8_t a)

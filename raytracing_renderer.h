@@ -14,12 +14,13 @@ class RayTracingRenderer
 {
 public:
     using ProgramContextType = RayTracingProgramContext;
+    using ModelDataType = CudaModelData;
 
     RayTracingRenderer(CanvasType&& canvas);
 
     void CreateBuffer(EPixelFormat pixelFormat);
     void SetProgram(ProgramContextType& programCtx);
-    void SetMesh(ModelData &mesh);
+    void SetMesh(ModelDataType &mesh);
     void ClearZBuffer();
     void ClearColorBuffer(std::uint32_t color);
     void Draw(float timeElapsed);
@@ -33,11 +34,11 @@ public:
         pro::proxy<PixelShaderFacade> pp) noexcept;
 
 private:
-    glm::vec4 RenderRay(int x, int y);
-
+    float* colorBuffer;
+    float* depthBuffer;
     CanvasType canvas;
     int width = 0;
     int height = 0;
     glm::mat4 viewMatrix;
-    ModelData *modelData = nullptr;
+    ModelDataType* modelData = nullptr;
 };

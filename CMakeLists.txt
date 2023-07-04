@@ -11,7 +11,6 @@ add_executable(swengine WIN32
 "raytracing_renderer.cc"
 "raytracing_kernels.cu"
 "headless_canvas.cc"
-"model/model_data.cc" 
 "shading/material/simple_vertex_program.cc"
 "shading/material/phong_material.cc"
 "shading/material/blinn_material.cc"

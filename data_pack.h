@@ -232,5 +232,6 @@ public:
 
 constexpr size_t MAX_PROGRAM_DATA_ITEMS = 40;
 
-using ModelDataPack = DataPack<std::vector<float>>;
+template<template<typename> typename Allocator>
+using ModelDataPack = DataPack<std::vector<float, Allocator<float>>>;
 using ProgramDataPack = DataPack<std::array<float, MAX_PROGRAM_DATA_ITEMS>>;
