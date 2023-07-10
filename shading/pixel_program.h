@@ -3,17 +3,6 @@
 #include "shading/light/light.h"
 #include "data_pack.h"
 
-struct LightEntry
-{
-    LightFunction directionEntry = nullptr;
-    LightFunction colorEntry = nullptr;
-    LightIntensityFunction intensityEntry = nullptr;
-
-    Light* self = nullptr;
-    bool isAmbient = false;
-    float ambientIntensity = 0.0;
-};
-
 struct PixelShaderInputDefinitionDispatchable : pro::dispatch<std::vector<VertexDataDescriptor>()>
 {
     template <class TSelf>

@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 
 enum class VertexAttributes: std::uint32_t
 {

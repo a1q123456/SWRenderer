@@ -17,14 +17,9 @@ void RayTracingRenderer::CreateBuffer(EPixelFormat pixelFormat)
     cudaMemset(depthBufferU8.get(), 0, width * height * sizeof(std::uint8_t));
 }
 
-void RayTracingRenderer::SetProgram(RayTracingRenderer::ProgramContextType& programCtx)
+void RayTracingRenderer::AddMesh(ModelDataType* mesh, ProgramContextType& programCtx)
 {
-    iviewMatrix = glm::identity<glm::mat4>();
-}
 
-void RayTracingRenderer::SetMesh(RayTracingRenderer::ModelDataType* mesh)
-{
-    modelData = mesh;
 }
 
 void RayTracingRenderer::ClearZBuffer()
@@ -55,8 +50,7 @@ void RayTracingRenderer::ProjectionMatrix(glm::mat4x4 proj)
     iprojMatrix = glm::inverse(proj);
 }
 
-RayTracingRenderer::ProgramContextType RayTracingRenderer::LinkProgram(pro::proxy<VertexShaderFacade> vp,
-                                                                        pro::proxy<PixelShaderFacade> pp) noexcept
+RayTracingRenderer::ProgramContextType RayTracingRenderer::LinkProgram(pro::proxy<PixelShaderFacade> pp) noexcept
 {
     return RayTracingRenderer::ProgramContextType{};
 }

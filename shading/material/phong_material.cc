@@ -1,4 +1,5 @@
 #include "phong_material.h"
+#include <cmath>
 
 std::vector<VertexDataDescriptor> PhongMaterial::GetInputDefinition() const noexcept
 {

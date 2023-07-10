@@ -4,6 +4,7 @@
 #include "raytracing_renderer.h"
 #include "shading/material/simple_vertex_program.h"
 #include "shading/material/blinn_material.h"
+#include "shading/material/pbr_material.h"
 #include "native_window_handle.h"
 #include "pixel_format.h"
 #include "cuda_utils.h"
@@ -32,8 +33,7 @@ class SceneController
 
     glm::mat4 projectionMatrix;
     RendererType renderer;
-    BlinnMaterial pixelProgram;
-    SimpleVertexProgram vertexProgram;
+    CudaPointer<PBRMaterial> pixelProgram;
     CudaPointer<RendererType::ModelDataType> modelData;
     RendererType::ProgramContextType programCtx;
 

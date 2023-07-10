@@ -96,11 +96,11 @@ SceneController::SceneController(CanvasType&& canvas) : width(canvas.Width()), h
         {VertexAttributes::Normal, VertexAttributeTypes::Vec3},
     });
 
-    pixelProgram.UseLights({&ambientLight, &pointLight});
-    pixelProgram.SetDiffuseMap(textureData.get(), textureW, textureH);
-    programCtx = renderer.LinkProgram(&vertexProgram, &pixelProgram);
-}
+    pixelProgram = CudaNewManaged<PBRMaterial>();
 
+    pixelProgram->SetDiffuseMap(CudaUploadData<std::uint8_t>(textureData.get(), textureW * textureH * 4), textureW, textureH);
+    programCtx = renderer.LinkProgram(pixelProgram.get());
+}
 
 void SceneController::Render(float timeElapsed)
 {
@@ -116,24 +116,13 @@ void SceneController::Render(float timeElapsed)
     auto rotationMatrix = glm::eulerAngleXYZ(0.f, 0.f, 0.f);
     auto modelTransform = translateMatrix * translateBackMatrix * rotationMatrix * scaleMatrix * translateOriginMatrix;
 
-    renderer.SetMesh(modelData.get());
-    renderer.SetProgram(programCtx);
+    renderer.AddMesh(modelData.get(), programCtx);
     renderer.ClearColorBuffer(argb(0xFF, 0xFF, 0xFF, 0xFF));
-    // renderer.ClearColorBuffer(argb(0x00, 0x00, 0x00, 0x00));
     renderer.ClearZBuffer();
 
-    auto projVP = projectionMatrix * viewTransform;
-    vertexProgram.SetModelMatrix(modelTransform);
-    vertexProgram.SetViewProjectMatrix(projVP);
-    pixelProgram.SetViewPosition(cameraPos);
     renderer.Canvas().SwapBuffer();
     renderer.Draw(timeElapsed);
     renderer.Canvas().AddText(0, 24, 12, std::format("x: {}, y: {}", mouseX, mouseY), 0xFFFFFFFF);
-
-    // for (int i = 0; i < 300; i++)
-    // {
-    //     memcpy(renderer.GetColorBuffer() + (i * width * 4), textureData.get() + (i * textureW * 4), 300 * 4);
-    // }
 }
 
 

@@ -1,5 +1,6 @@
 #pragma once
-#include "shading/vertex_program.h"
+#include "model/vertex.h"
+#include "data_pack.h"
 
 class SimpleVertexProgram
 {

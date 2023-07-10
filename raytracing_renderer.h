@@ -20,8 +20,7 @@ public:
     RayTracingRenderer(CanvasType&& canvas);
 
     void CreateBuffer(EPixelFormat pixelFormat);
-    void SetProgram(ProgramContextType& programCtx);
-    void SetMesh(ModelDataType* mesh);
+    void AddMesh(ModelDataType* mesh, ProgramContextType& programCtx);
     void ClearZBuffer();
     void ClearColorBuffer(std::uint32_t color);
     void Draw(float timeElapsed);
@@ -30,9 +29,7 @@ public:
     void SetMultiSampleLevel(int msaa);
     void ProjectionMatrix(glm::mat4x4 proj);
 
-    static ProgramContextType LinkProgram(
-        pro::proxy<VertexShaderFacade> vp,
-        pro::proxy<PixelShaderFacade> pp) noexcept;
+    static ProgramContextType LinkProgram(pro::proxy<PixelShaderFacade> pp) noexcept;
 
 private:
     CudaPointer<std::uint8_t[]> colorBufferU8;
