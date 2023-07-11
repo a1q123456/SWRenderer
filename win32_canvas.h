@@ -1,6 +1,5 @@
 #pragma once
 #include "tstring.h"
-#include "icanvas.h"
 
 class Win32Canvas
 {

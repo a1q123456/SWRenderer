@@ -2,11 +2,12 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include "shading/light/light.h"
+#include "shading/pixel_program.h"
 #include "model/vertex.h"
 #include "data_pack.h"
 #include "cuda_utils.h"
 
-class PBRMaterial
+class PBRMaterial : public PixelProgram
 {
     CudaPointer<std::uint8_t[]> textureData;
     int textureW = 0;
@@ -20,5 +21,6 @@ public:
     }
 
     std::vector<VertexDataDescriptor> GetInputDefinition() const noexcept;
-    glm::vec4 GetPixelColor(const ProgramDataPack& args) const noexcept;
+    __device__ glm::vec4 GetPixelColor(const ProgramDataPack& args) const noexcept;
+    PixelFunction GetEntry() const noexcept;
 };

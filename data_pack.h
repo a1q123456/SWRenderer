@@ -139,7 +139,8 @@ public:
         return MapFind(nameDescriptorMap, name) != nullptr;
     }
 
-    template <typename T> T GetData(int index, VertexAttributes attr) const noexcept
+    template <typename T>
+    __device__ __host__ T GetData(int index, VertexAttributes attr) const noexcept
     {
         assert(attr != VertexAttributes::Custom);
         auto type = MapGet(descriptorMap, attr);
@@ -152,7 +153,8 @@ public:
         return ret;
     }
 
-    template <typename T> T GetData(int index, std::string_view name) const noexcept
+    template <typename T> 
+    __device__ __host__ T GetData(int index, std::string_view name) const noexcept
     {
         auto type = MapGet(nameDescriptorMap, name);
         auto start = elementSize * index + MapGet(nameOffsetMap, name);
@@ -164,20 +166,20 @@ public:
         return ret;
     }
 
-    float GetData(int index, int nItem, VertexAttributes attr) const noexcept
+    __device__ __host__ float GetData(int index, int nItem, VertexAttributes attr) const noexcept
     {
         assert(attr != VertexAttributes::Custom);
         auto start = elementSize * index + MapGet(offsetMap, attr);
         return storage[start + nItem];
     }
 
-    float GetData(int index, int nItem, int dataIndex) const noexcept
+    __device__ __host__ float GetData(int index, int nItem, int dataIndex) const noexcept
     {
         auto start = elementSize * index + offsetMap[dataIndex].second;
         return storage[start + nItem];
     }
 
-    float GetData(int index, int nItem, std::string_view name) const noexcept
+    __device__ __host__ float GetData(int index, int nItem, std::string_view name) const noexcept
     {
         auto start = elementSize * index + MapGet(nameOffsetMap, name);
         return storage[start + nItem];

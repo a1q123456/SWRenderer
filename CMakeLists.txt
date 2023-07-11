@@ -36,14 +36,12 @@ target_link_libraries(swengine PRIVATE glm::glm)
 find_package(Stb REQUIRED)
 target_include_directories(swengine PRIVATE Stb_INCLUDE_DIR ${PROJECT_SOURCE_DIR} ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 target_compile_options(swengine PRIVATE $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<COMPILE_LANGUAGE:CXX>>:/openmp>)
-target_compile_options(swengine PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:--diag-suppress 20012 -std=c++17>)
+target_compile_options(swengine PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:--diag-suppress 20012,3012 -std=c++20>)
 target_compile_definitions(swengine PRIVATE $<BOOL:${WIN32}>:WIN32>)
-find_package(proxy CONFIG REQUIRED)
-target_link_libraries(swengine PRIVATE msft_proxy)
 set_target_properties(swengine PROPERTIES
     CXX_STANDARD 20
     CXX_STANDARD_REQUIRED ON
-    CUDA_STANDARD 11
+    CUDA_STANDARD 12
     CUDA_STANDARD_REQUIRED ON
 )
 

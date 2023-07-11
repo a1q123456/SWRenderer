@@ -1,9 +1,10 @@
 #pragma once
 #include "shading/light/light.h"
+#include "shading/pixel_program.h"
 #include "model/vertex.h"
 #include "data_pack.h"
 
-class BlinnMaterial
+class BlinnMaterial : public PixelProgram
 {
     std::vector<LightEntry> lightEntry;
     std::uint8_t *textureData = nullptr;
@@ -28,4 +29,12 @@ public:
     std::vector<VertexDataDescriptor> GetInputDefinition() const noexcept;
     void UseLights(const std::vector<Light *> &lights) noexcept;
     glm::vec4 GetPixelColor(const ProgramDataPack& args) const noexcept;
+
+    PixelFunction GetEntry() const noexcept 
+    {
+        return [](PixelProgram* d, const ProgramDataPack& args) 
+        { 
+            return static_cast<BlinnMaterial*>(d)->GetPixelColor(args);
+        }; 
+    }
 };

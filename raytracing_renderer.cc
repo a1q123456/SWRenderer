@@ -50,7 +50,7 @@ void RayTracingRenderer::ProjectionMatrix(glm::mat4x4 proj)
     iprojMatrix = glm::inverse(proj);
 }
 
-RayTracingRenderer::ProgramContextType RayTracingRenderer::LinkProgram(pro::proxy<PixelShaderFacade> pp) noexcept
+RayTracingRenderer::ProgramContextType RayTracingRenderer::LinkProgram(PixelProgram* pp) noexcept
 {
     return RayTracingRenderer::ProgramContextType{};
 }

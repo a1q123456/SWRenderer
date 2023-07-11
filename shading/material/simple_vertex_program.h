@@ -1,8 +1,9 @@
 #pragma once
 #include "model/vertex.h"
+#include "shading/vertex_program.h"
 #include "data_pack.h"
 
-class SimpleVertexProgram
+class SimpleVertexProgram : public VertexProgram
 {
 private:
     glm::mat4 modelTransform;
@@ -13,4 +14,11 @@ public:
     const std::vector<VertexDataDescriptor>& GetInputDefinition() const noexcept;
     const std::vector<VertexDataDescriptor>& GetOutputDefinition() const noexcept;
     ProgramDataPack GetOutput(const ProgramDataPack& args) const noexcept;
+    VertexFunction GetEntry() const noexcept 
+    {
+        return [](VertexProgram* d, const ProgramDataPack& args) 
+        { 
+            return static_cast<SimpleVertexProgram*>(d)->GetOutput(args);
+        }; 
+    }
 };

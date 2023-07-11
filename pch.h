@@ -41,7 +41,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/rotate_vector.hpp>
-#include <proxy/proxy.h>
 #include <format>
 #include <cuda.h>
 #include <cuda_runtime_api.h>

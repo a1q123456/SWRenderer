@@ -3,29 +3,15 @@
 #include "shading/light/light.h"
 #include "data_pack.h"
 
-struct PixelShaderInputDefinitionDispatchable : pro::dispatch<std::vector<VertexDataDescriptor>()>
-{
-    template <class TSelf>
-    std::vector<VertexDataDescriptor> operator()(const TSelf& self) const noexcept
-    {
-        return self.GetInputDefinition();
-    }
-};
+class PixelProgram;
+using TPixelFunction = glm::vec4(PixelProgram* d, const ProgramDataPack& args);
+using PixelFunction = TPixelFunction*;
 
-struct PixelShaderOutputColorDispatchable : pro::dispatch<glm::vec4(const ProgramDataPack& args)>
+class PixelProgram
 {
-    template <class TSelf>
-    glm::vec4 operator()(
-        const TSelf& self,
-        const ProgramDataPack& args) const noexcept
-    {
-        return self.GetPixelColor(args);
-    }
-};
-
-struct PixelShaderFacade : pro::facade<
-    PixelShaderInputDefinitionDispatchable,
-    PixelShaderOutputColorDispatchable>
-{
-
+public:
+    virtual void UseLights(const std::vector<Light*>& lights) noexcept {};
+    virtual std::vector<VertexDataDescriptor> GetInputDefinition() const noexcept = 0;
+    virtual PixelFunction GetEntry() const noexcept = 0;
+    virtual ~PixelProgram() {}
 };

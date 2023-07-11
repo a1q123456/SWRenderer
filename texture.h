@@ -1,7 +1,7 @@
 #pragma once
 #include "pixel_format.h"
 #include "resource.h"
-#include "sampler.h"
+#include "texture-filtering/filters.h"
 
 template<std::size_t N>
 struct TextureDesc

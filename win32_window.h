@@ -1,9 +1,7 @@
 #pragma once
-#include "iwindow.h"
 #include "tstring.h"
 #include "scene_controller.h"
 #include "win32_canvas.h"
-#include "test_scene.h"
 
 
 class Win32Window

@@ -1,4 +1,3 @@
-#include "iwindow.h"
 #include "platform_factory.h"
 #include "win32_window.h"
 

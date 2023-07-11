@@ -25,8 +25,11 @@ struct SWRendererProgramContext
 
     uint32_t inputVertexAttributes;
 
-    pro::proxy<VertexShaderFacade> vertexProgram;
-    pro::proxy<PixelShaderFacade> pixelProgram;
+    VertexFunction vertexEntry;
+    PixelFunction pixelEntry;
+
+    VertexProgram *vertexProgram = nullptr;
+    PixelProgram *pixelProgram = nullptr;
 
     bool vsOutputsUv = false;
     bool vsOutputsColor = false;
@@ -57,9 +60,7 @@ public:
 
     using ProgramContextType = SWRendererProgramContext;
 
-    static SWRenderer::ProgramContextType LinkProgram(
-        pro::proxy<VertexShaderFacade> vp,
-        pro::proxy<PixelShaderFacade> pp) noexcept;
+    static ProgramContextType LinkProgram(VertexProgram* vp, PixelProgram* pp) noexcept;
 
     void CreateBuffer(EPixelFormat pixelFormat);
 

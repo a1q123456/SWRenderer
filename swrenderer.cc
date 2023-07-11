@@ -101,17 +101,18 @@ struct Triangle
     }
 };
 
-
-SWRenderer::ProgramContextType SWRenderer::LinkProgram(pro::proxy<VertexShaderFacade> vp,
-                                        pro::proxy<PixelShaderFacade> pp) noexcept
+SWRenderer::ProgramContextType SWRenderer::LinkProgram(VertexProgram *vp, PixelProgram *pp) noexcept
 {
     SWRenderer::ProgramContextType ctx;
-    ctx.vertexProgram = std::move(vp);
-    ctx.pixelProgram = std::move(pp);
+    ctx.vertexProgram = vp;
+    ctx.pixelProgram = pp;
 
-    ctx.vsInputDesc = ctx.vertexProgram.invoke<VertexShaderInputDefinitionDispatchable>();
-    ctx.vsOutputDesc = ctx.vertexProgram.invoke<VertexShaderOutputDefinitionDispatchable>();
-    ctx.psInputDesc = ctx.pixelProgram.invoke<PixelShaderInputDefinitionDispatchable>();
+    ctx.vsInputDesc = ctx.vertexProgram->GetInput();
+    ctx.vsOutputDesc = ctx.vertexProgram->GetOutput();
+    ctx.psInputDesc = ctx.pixelProgram->GetInputDefinition();
+
+    ctx.vertexEntry = ctx.vertexProgram->GetEntry();
+    ctx.pixelEntry = ctx.pixelProgram->GetEntry();
 
     ctx.inputVertexAttributes = GetVertexAttributeMask(ctx.vsInputDesc);
 
@@ -258,7 +259,7 @@ void SWRenderer::Draw(float timeElapsed)
                     vsInput[j].SetData(0, k, d.attr, modelData->GetVertexData(i + j, k, d.attr));
                 }
             }
-            vsOutput[j] = programCtx->vertexProgram.invoke<VertexShaderOutputDispatchable>(vsInput[j]);
+            vsOutput[j] = programCtx->vertexEntry(programCtx->vertexProgram, vsInput[j]);
             for (int i = 0; i < (int)programCtx->vsOutputPosType; i++)
             {
                 v[j][i] = vsOutput[j].GetData(0, i, programCtx->vsOutputPosIdx);
@@ -422,7 +423,7 @@ void SWRenderer::Draw(float timeElapsed)
                     }
                 }
 
-                auto sampleColor = programCtx->pixelProgram.invoke<PixelShaderOutputColorDispatchable>(psInput);
+                auto sampleColor = programCtx->pixelEntry(programCtx->pixelProgram, psInput);
                 bool hasRendered = false;
 
                 for (auto sampleIndex : samplesInTriangle)

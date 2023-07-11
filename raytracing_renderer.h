@@ -29,7 +29,7 @@ public:
     void SetMultiSampleLevel(int msaa);
     void ProjectionMatrix(glm::mat4x4 proj);
 
-    static ProgramContextType LinkProgram(pro::proxy<PixelShaderFacade> pp) noexcept;
+    static ProgramContextType LinkProgram(PixelProgram* pp) noexcept;
 
 private:
     CudaPointer<std::uint8_t[]> colorBufferU8;
