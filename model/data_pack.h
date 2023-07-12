@@ -1,10 +1,12 @@
 #pragma once
 #include "model/vertex.h"
-#include <array>
+#include <cuda/std/array>
 #include <vector>
 #include <string_view>
 #include <algorithm>
 #include <iterator>
+#include <cuda.h>
+#include <cassert>
 
 template <typename TStorage> class DataPack
 {
@@ -13,21 +15,21 @@ template <typename TStorage> class DataPack
     TStorage storage{};
     size_t elementSize = 0;
 
-    std::array<VertexDataDescriptor, MAX_DESCRIPTORS> descriptors;
-    std::array<std::pair<VertexAttributes, VertexAttributeTypes>, MAX_DESCRIPTORS> descriptorMap;
-    std::array<std::pair<std::string_view, VertexAttributeTypes>, MAX_DESCRIPTORS> nameDescriptorMap;
-    std::array<std::pair<VertexAttributes, size_t>, MAX_DESCRIPTORS> offsetMap;
-    std::array<std::pair<std::string_view, size_t>, MAX_DESCRIPTORS> nameOffsetMap;
+    cuda::std::array<VertexDataDescriptor, MAX_DESCRIPTORS> descriptors;
+    cuda::std::array<std::pair<VertexAttributes, VertexAttributeTypes>, MAX_DESCRIPTORS> descriptorMap;
+    cuda::std::array<std::pair<std::string_view, VertexAttributeTypes>, MAX_DESCRIPTORS> nameDescriptorMap;
+    cuda::std::array<std::pair<VertexAttributes, size_t>, MAX_DESCRIPTORS> offsetMap;
+    cuda::std::array<std::pair<std::string_view, size_t>, MAX_DESCRIPTORS> nameOffsetMap;
 
 private:
     template <typename TMap, typename TKey, typename TVal = decltype(std::declval<TMap>()[0].second)>
-    TVal MapGet(TMap&& map, TKey&& key) const
+    __device__ __host__ TVal MapGet(TMap&& map, TKey&& key) const
     {
         return std::find_if(std::begin(map), std::end(map), [&](auto&& pair) { return pair.first == key; })->second;
     }
 
     template <typename TMap, typename TKey, typename TVal = decltype(std::declval<TMap>()[0].second)>
-    const TVal* MapFind(TMap&& map, TKey&& key) const
+    __device__ __host__ const TVal* MapFind(TMap&& map, TKey&& key) const
     {
         auto ret = std::find_if(std::begin(map), std::end(map), [&](auto&& pair) { return pair.first == key; });
         if (ret == std::end(map))
@@ -241,4 +243,4 @@ constexpr size_t MAX_PROGRAM_DATA_ITEMS = 40;
 
 template<template<typename> typename Allocator>
 using ModelDataPack = DataPack<std::vector<float, Allocator<float>>>;
-using ProgramDataPack = DataPack<std::array<float, MAX_PROGRAM_DATA_ITEMS>>;
+using ProgramDataPack = DataPack<cuda::std::array<float, MAX_PROGRAM_DATA_ITEMS>>;

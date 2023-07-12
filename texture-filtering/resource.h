@@ -1,5 +1,7 @@
 #pragma once
 #include "texture-filtering/resource_data_type.h"
+#include <algorithm>
+#include <numeric>
 
 template<std::size_t N>
 using TextureBoundary = glm::vec<N, float, glm::highp>;

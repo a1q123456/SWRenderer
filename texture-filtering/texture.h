@@ -2,6 +2,9 @@
 #include "image-processing/pixel_format.h"
 #include "resource.h"
 #include "texture-filtering/filters.h"
+#include <span>
+#include <cstdint>
+#include <vector>
 
 template<std::size_t N>
 struct TextureDesc

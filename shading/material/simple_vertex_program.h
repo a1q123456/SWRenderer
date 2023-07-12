@@ -2,6 +2,7 @@
 #include "model/vertex.h"
 #include "shading/vertex_program.h"
 #include "model/data_pack.h"
+#include <glm/glm.hpp>
 
 class SimpleVertexProgram : public VertexProgram
 {

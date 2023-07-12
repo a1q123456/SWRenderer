@@ -1,6 +1,7 @@
 #pragma once
 #include "texture-filtering/filters.h"
 #include "resource.h"
+#include <glm/gtx/compatibility.hpp>
 
 class LinearSamplerAlgorithm
 {

@@ -1,4 +1,8 @@
 #pragma once
+#include <glm/glm.hpp>
+#include <vector>
+#include <span>
+#include <cstdint>
 
 template<size_t Dim>
 using TextureCoordinate = glm::vec<Dim, float, glm::qualifier::highp>;

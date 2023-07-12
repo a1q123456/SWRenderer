@@ -1,5 +1,11 @@
 #include "scene_controller.h"
 #include "utils.h"
+#include <stb_image.h>
+#include <glm/matrix.hpp>
+#include <glm/ext/matrix_common.hpp>
+#include <glm/ext/matrix_clip_space.hpp>
+#include <glm/gtx/euler_angles.hpp>
+#include <glm/ext/matrix_transform.hpp>
 
 // clang-format off
 constexpr float vertexList[] = {

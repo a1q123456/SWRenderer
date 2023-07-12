@@ -1,6 +1,8 @@
 #include "raytracing_renderer.h"
 #include "utils.h"
 #include "raytracing_kernels.h"
+#include <cuda.h>
+#include <cuda_runtime_api.h>
 
 RayTracingRenderer::RayTracingRenderer(CanvasType&& canvas) : 
     canvas(std::move(canvas)), 

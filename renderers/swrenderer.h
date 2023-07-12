@@ -10,6 +10,8 @@
 #include "shading/light/ambient_light.h"
 #include "shading/material/blinn_material.h"
 #include "image-processing/pixel_format.h"
+#include <map>
+#include <list>
 
 struct SWRendererProgramContext
 {

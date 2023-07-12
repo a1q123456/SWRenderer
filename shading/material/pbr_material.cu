@@ -16,9 +16,9 @@ __device__ glm::vec4 PBRMaterial::GetPixelColor(const ProgramDataPack& args) con
     auto imgX = glm::clamp((int)std::round(uvw.x * textureW), 0, textureW - 1);
     auto imgY = glm::clamp((int)std::round(uvw.y * textureH), 0, textureH - 1);
     glm::vec4 outColor{
-        // textureData.get()[(imgY) * textureW * 4 + imgX * 4 + 0] / 255.0,
-        // textureData.get()[(imgY) * textureW * 4 + imgX * 4 + 1] / 255.0,
-        // textureData.get()[(imgY) * textureW * 4 + imgX * 4 + 2] / 255.0,
+        textureData[(imgY) * textureW * 4 + imgX * 4 + 0] / 255.0,
+        textureData[(imgY) * textureW * 4 + imgX * 4 + 1] / 255.0,
+        textureData[(imgY) * textureW * 4 + imgX * 4 + 2] / 255.0,
         1.0};
 
     return glm::vec4{glm::vec3{outColor}, 1.0};

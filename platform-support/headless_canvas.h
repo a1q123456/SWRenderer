@@ -1,5 +1,6 @@
 #pragma once
 #include "tstring.h"
+#include <filesystem>
 
 class HeadlessCanvas
 {

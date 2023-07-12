@@ -1,6 +1,15 @@
 #include "swrenderer.h"
 #include "model/data_pack.h"
 #include "utils.h"
+#include <glm/mat4x4.hpp>
+#include <glm/vec4.hpp>
+#include <glm/vec3.hpp>
+#include <glm/common.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/euler_angles.hpp>
+#include <glm/gtx/rotate_vector.hpp>
+#include <numeric>
 
 #define LOAD_ATTR_IDX(cattr, outidx, ctype)                                                                            \
     if (d.attr == cattr)                                                                                               \

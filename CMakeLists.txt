@@ -29,14 +29,13 @@ if (WIN32)
 endif()
 
 target_compile_definitions(swengine PRIVATE NOMINMAX)
-target_precompile_headers(swengine PRIVATE pch.h)
 
 find_package(glm CONFIG REQUIRED)
 target_link_libraries(swengine PRIVATE glm::glm)
 find_package(Stb REQUIRED)
 target_include_directories(swengine PRIVATE Stb_INCLUDE_DIR ${PROJECT_SOURCE_DIR} ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 target_compile_options(swengine PRIVATE $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<COMPILE_LANGUAGE:CXX>>:/openmp>)
-target_compile_options(swengine PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:--diag-suppress 20012,3012 -std=c++20>)
+target_compile_options(swengine PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:--diag-suppress 20012,3012 -std=c++20 --expt-relaxed-constexpr>)
 target_compile_definitions(swengine PRIVATE $<BOOL:${WIN32}>:WIN32>)
 set_target_properties(swengine PROPERTIES
     CXX_STANDARD 20

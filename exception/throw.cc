@@ -1,4 +1,6 @@
 #include "throw.h"
+#include <exception>
+#include <stdexcept>
 
 class MisalignedMemoryAccess : public std::logic_error
 {

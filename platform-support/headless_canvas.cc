@@ -1,4 +1,7 @@
 #include "headless_canvas.h"
+#include <stb_image.h>
+#include <stb_image_write.h>
+#include <fstream>
 
 HeadlessCanvas::HeadlessCanvas(int w, int h) : 
     width(w), 

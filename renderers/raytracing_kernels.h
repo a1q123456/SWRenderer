@@ -11,7 +11,6 @@
 #include "utils.h"
 #include "model/model_data.h"
 
-
 __device__ Ray generateRay(glm::mat4x4 iproj, glm::mat4x4 iviewTransform, int w, int h);
 
 __global__ void renderRay(glm::mat4x4 iproj, glm::mat4x4 iviewTransform, int w, int h, std::uint8_t* dst);

@@ -1,5 +1,8 @@
 #include "rescaling.h"
 #include "texture-filtering/cubic_sampler_algorithm.h"
+#include <memory_resource>
+#include <vector>
+#include <array>
 
 static std::pmr::unsynchronized_pool_resource memoryPool{};
 
