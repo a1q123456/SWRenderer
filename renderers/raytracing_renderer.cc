@@ -34,7 +34,7 @@ void RayTracingRenderer::ClearColorBuffer(std::uint32_t color)
 
 void RayTracingRenderer::Draw(float timeElapsed)
 {
-    CudaThrowIfFailed(renderFrame(iprojMatrix, iviewMatrix, width, height, colorBufferU8.get()));
+    CudaThrowIfFailed(renderFrame(iprojMatrix, iviewMatrix, {}, width, height, colorBufferU8.get()));
     CudaThrowIfFailed(cudaMemcpy(canvas.Buffer(), colorBufferU8.get(), width * height * 4, cudaMemcpyDeviceToHost));
 }
 

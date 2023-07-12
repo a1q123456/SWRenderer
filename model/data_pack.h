@@ -40,20 +40,21 @@ private:
     }
 
     template <typename TArgs, size_t Index>
-    constexpr void SetDataImpl(int start, size_t offset, std::index_sequence<Index>, TArgs&& args)
+    __device__ __host__ constexpr void SetDataImpl(int start, size_t offset, std::index_sequence<Index>, TArgs&& args)
     {
         storage[start + offset + Index] = std::get<Index>(args);
     }
 
     template <typename TArgs, size_t Index, size_t... RestI>
-    constexpr void SetDataImpl(int start, size_t offset, std::index_sequence<Index, RestI...>, TArgs&& args)
+    __device__ __host__ constexpr void SetDataImpl(int start, size_t offset, std::index_sequence<Index, RestI...>,
+                                                   TArgs&& args)
     {
         storage[start + offset + Index] = std::get<Index>(args);
         SetDataImpl(start, offset, std::index_sequence<RestI...>{}, std::forward<TArgs>(args));
     }
 
 public:
-    DataPack() = default;
+    __device__ __host__ DataPack() = default;
     template <typename T> DataPack(T&& dp) noexcept : storage(std::forward<T>(dp))
     {
     }
@@ -187,26 +188,27 @@ public:
         return storage[start + nItem];
     }
 
-    void SetData(int index, int nItem, VertexAttributes attr, float val)
+    __device__ __host__ void SetData(int index, int nItem, VertexAttributes attr, float val)
     {
         assert(attr != VertexAttributes::Custom);
         auto start = elementSize * index + MapGet(offsetMap, attr);
         SetDataImpl(start, nItem, std::index_sequence<0>{}, std::make_tuple(val));
     }
 
-    void SetData(int index, int nItem, int dataIdx, float val)
+    __device__ __host__ void SetData(int index, int nItem, int dataIdx, float val)
     {
         auto start = elementSize * index + offsetMap[dataIdx].second;
         SetDataImpl(start, nItem, std::index_sequence<0>{}, std::make_tuple(val));
     }
 
-    void SetData(int index, int nItem, std::string_view name, float val)
+    __device__ __host__ void SetData(int index, int nItem, std::string_view name, float val)
     {
         auto start = elementSize * index + MapGet(nameOffsetMap, name);
         SetDataImpl(start, nItem, std::index_sequence<0>{}, std::make_tuple(val));
     }
 
-    template <typename T> void SetData(int index, VertexAttributes attr, T&& val)
+    template <typename T> 
+    __device__ __host__ void SetData(int index, VertexAttributes attr, T&& val)
     {
         assert(attr != VertexAttributes::Custom);
         auto start = elementSize * index + MapGet(offsetMap, attr);
@@ -214,7 +216,8 @@ public:
         SetDataImpl(start, 0, std::index_sequence<0>{}, std::make_tuple(val));
     }
 
-    template <typename... TRest> void SetData(int index, VertexAttributes attr, TRest&&... rest)
+    template <typename... TRest> 
+    __device__ __host__ void SetData(int index, VertexAttributes attr, TRest&&... rest)
     {
         assert(attr != VertexAttributes::Custom);
         auto start = elementSize * index + MapGet(offsetMap, attr);
@@ -223,14 +226,16 @@ public:
                     std::make_tuple(std::forward<TRest>(rest)...));
     }
 
-    template <typename T> void SetData(int index, std::string_view name, T&& val)
+    template <typename T> 
+    __device__ __host__ void SetData(int index, std::string_view name, T&& val)
     {
         auto start = elementSize * index + MapGet(nameOffsetMap, name);
         assert((size_t)MapGet(nameDescriptorMap, name) == 1);
         SetDataImpl(start, 0, std::index_sequence<0>{}, std::make_tuple(val));
     }
 
-    template <typename... TRest> void SetData(int index, std::string_view name, TRest&&... rest)
+    template <typename... TRest> 
+    __device__ __host__ void SetData(int index, std::string_view name, TRest&&... rest)
     {
         auto start = elementSize * index + MapGet(nameOffsetMap, name);
         assert((size_t)MapGet(nameDescriptorMap, name) == sizeof...(rest));
