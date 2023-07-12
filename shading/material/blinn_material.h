@@ -2,7 +2,7 @@
 #include "shading/light/light.h"
 #include "shading/pixel_program.h"
 #include "model/vertex.h"
-#include "data_pack.h"
+#include "model/data_pack.h"
 
 class BlinnMaterial : public PixelProgram
 {

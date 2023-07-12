@@ -1,6 +1,6 @@
 #pragma once
 #include "model/vertex.h"
-#include "data_pack.h"
+#include "model/data_pack.h"
 
 class VertexProgram;
 using TVertexFunction = ProgramDataPack(VertexProgram* self, const ProgramDataPack& args);

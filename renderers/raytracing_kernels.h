@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <iterator>
 #include <stdexcept>
-#include "cuda_utils.h"
+#include "cuda-support/cuda_utils.h"
 #include "utils.h"
 #include "model/model_data.h"
 

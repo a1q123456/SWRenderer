@@ -1,13 +1,13 @@
 #pragma once
-#include "platform_defines.h"
-#include "swrenderer.h"
-#include "raytracing_renderer.h"
+#include "platform-support/platform_defines.h"
+#include "platform-support/native_window_handle.h"
+#include "renderers/swrenderer.h"
+#include "renderers/raytracing_renderer.h"
 #include "shading/material/simple_vertex_program.h"
 #include "shading/material/blinn_material.h"
 #include "shading/material/pbr_material.h"
-#include "native_window_handle.h"
-#include "pixel_format.h"
-#include "cuda_utils.h"
+#include "image-processing/pixel_format.h"
+#include "cuda-support/cuda_utils.h"
 
 class SceneController
 {

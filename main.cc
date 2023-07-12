@@ -1,7 +1,6 @@
-#include "platform_factory.h"
-#include "win32_window.h"
+#include "platform-support/win32_window.h"
 
-#include "texture.h"
+#include "texture-filtering/texture.h"
 
 int WinMain(
     HINSTANCE hInstance,

@@ -1,7 +1,7 @@
 #pragma once
 #include "model/vertex.h"
 #include "shading/light/light.h"
-#include "data_pack.h"
+#include "model/data_pack.h"
 
 class PixelProgram;
 using TPixelFunction = glm::vec4(PixelProgram* d, const ProgramDataPack& args);

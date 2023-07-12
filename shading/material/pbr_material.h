@@ -4,8 +4,8 @@
 #include "shading/light/light.h"
 #include "shading/pixel_program.h"
 #include "model/vertex.h"
-#include "data_pack.h"
-#include "cuda_utils.h"
+#include "model/data_pack.h"
+#include "cuda-support/cuda_utils.h"
 
 class PBRMaterial : public PixelProgram
 {

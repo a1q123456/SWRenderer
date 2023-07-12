@@ -1,5 +1,5 @@
 #pragma once
-#include "resource.h"
+#include "texture-filtering/resource_data_type.h"
 
 enum class EPixelFormat
 {

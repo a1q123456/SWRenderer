@@ -1,5 +1,5 @@
 #include "swrenderer.h"
-#include "data_pack.h"
+#include "model/data_pack.h"
 #include "utils.h"
 
 #define LOAD_ATTR_IDX(cattr, outidx, ctype)                                                                            \

@@ -4,26 +4,26 @@ project(swengine LANGUAGES CUDA CXX)
 
 add_executable(swengine WIN32  
 "main.cc" 
-"stbi.cc"
-"pixel_format.cc"
-"swrenderer.cc"
 "scene_controller.cc"
-"raytracing_renderer.cc"
-"raytracing_kernels.cu"
-"headless_canvas.cc"
+"image-processing/stbi.cc"
+"image-processing/pixel_format.cc"
+"image-processing/rescaling.cc"
+"renderers/swrenderer.cc"
+"renderers/raytracing_renderer.cc"
+"renderers/raytracing_kernels.cu"
+"platform-support/headless_canvas.cc"
 "shading/material/pbr_material.cu"
 "shading/material/simple_vertex_program.cc"
 "shading/material/phong_material.cc"
 "shading/material/blinn_material.cc"
 "shading/light/point_light.cc"
-"image-processing/rescaling.cc"
 )
 
 if (WIN32)
     target_sources(swengine PRIVATE
-        "win32_window.cc" 
-        "win32exception.cc" 
-        "win32_canvas.cc"
+        "platform-support/win32_window.cc" 
+        "platform-support/win32exception.cc" 
+        "platform-support/win32_canvas.cc"
         "exception/throw.cc"
     )
 endif()
@@ -41,7 +41,7 @@ target_compile_definitions(swengine PRIVATE $<BOOL:${WIN32}>:WIN32>)
 set_target_properties(swengine PROPERTIES
     CXX_STANDARD 20
     CXX_STANDARD_REQUIRED ON
-    CUDA_STANDARD 12
+    CUDA_STANDARD 11
     CUDA_STANDARD_REQUIRED ON
 )
 

@@ -1,4 +1,5 @@
 #pragma once
+#include "texture-filtering/resource_data_type.h"
 
 template<std::size_t N>
 using TextureBoundary = glm::vec<N, float, glm::highp>;
@@ -7,20 +8,6 @@ using Texture1DBoundary = TextureBoundary<1>;
 using Texture2DBoundary = TextureBoundary<2>;
 using Texture3DBoundary = TextureBoundary<3>;
 
-enum class EResourceDataType
-{
-    Float = 0,
-    Double,
-    Int8,
-    UInt8,
-    Int16,
-    UInt16,
-    Int32,
-    UInt32,
-    Int64,
-    UInt64,
-    DataTypesCount
-};
 
 constexpr std::size_t sizeOf(EResourceDataType dataType);
 template<EResourceDataType dataType>

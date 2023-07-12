@@ -1,7 +1,7 @@
 #pragma once
 #include "model/vertex.h"
 #include "shading/vertex_program.h"
-#include "data_pack.h"
+#include "model/data_pack.h"
 
 class SimpleVertexProgram : public VertexProgram
 {

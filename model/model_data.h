@@ -1,7 +1,7 @@
 #pragma once
 #include "vertex.h"
-#include "data_pack.h"
-#include "cuda/cuda_allocator.h"
+#include "model/data_pack.h"
+#include "cuda-support/cuda_allocator.h"
 
 template<template<typename> typename Allocator>
 class BaseModelData
@@ -16,18 +16,18 @@ public:
     void SetVertexList(const std::vector<float, Allocator<float>> &vertexData) noexcept;
     void SetVertexDescriptor(const std::vector<VertexDataDescriptor> &descriptors) noexcept;
 
-    std::vector<VertexAttributes> GetAttributes() const noexcept;
-    std::uint32_t GetAttributeMask() const noexcept;
-    VertexAttributeTypes GetType(VertexAttributes attr) const noexcept;
-    bool HasAttribute(VertexAttributes attr) const noexcept;
+    __device__ __host__ std::vector<VertexAttributes> GetAttributes() const noexcept;
+    __device__ __host__ std::uint32_t GetAttributeMask() const noexcept;
+    __device__ __host__ VertexAttributeTypes GetType(VertexAttributes attr) const noexcept;
+    __device__ __host__ bool HasAttribute(VertexAttributes attr) const noexcept;
 
     template <typename T>
-    T GetVertexData(int index, VertexAttributes attr) const noexcept
+    __device__ __host__ T GetVertexData(int index, VertexAttributes attr) const noexcept
     {
         return dataPack.template GetData<T>(indexData[index], attr);
     }
 
-    float GetVertexData(int index, int nItem, VertexAttributes attr) const noexcept
+    __device__ __host__ float GetVertexData(int index, int nItem, VertexAttributes attr) const noexcept
     {
         return dataPack.GetData(indexData[index], nItem, attr);
     }
@@ -52,25 +52,25 @@ void BaseModelData<Allocator>::SetVertexDescriptor(const std::vector<VertexDataD
 }
 
 template<template<typename> typename Allocator>
-std::vector<VertexAttributes> BaseModelData<Allocator>::GetAttributes() const noexcept
+__device__ __host__ std::vector<VertexAttributes> BaseModelData<Allocator>::GetAttributes() const noexcept
 {
     return dataPack.GetAttributes();
 }
 
 template<template<typename> typename Allocator>
-std::uint32_t BaseModelData<Allocator>::GetAttributeMask() const noexcept
+__device__ __host__ std::uint32_t BaseModelData<Allocator>::GetAttributeMask() const noexcept
 {
     return dataPack.GetAttributeMask();
 }
 
 template<template<typename> typename Allocator>
-VertexAttributeTypes BaseModelData<Allocator>::GetType(VertexAttributes attr) const noexcept
+__device__ __host__ VertexAttributeTypes BaseModelData<Allocator>::GetType(VertexAttributes attr) const noexcept
 {
     return dataPack.GetType(attr);
 }
 
 template<template<typename> typename Allocator>
-bool BaseModelData<Allocator>::HasAttribute(VertexAttributes attr) const noexcept
+__device__ __host__ bool BaseModelData<Allocator>::HasAttribute(VertexAttributes attr) const noexcept
 {
     return dataPack.HasAttribute(attr);
 }

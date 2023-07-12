@@ -1,5 +1,4 @@
 #include "pixel_format.h"
-#include "resource.h"
 
 namespace
 {

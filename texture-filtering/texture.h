@@ -1,5 +1,5 @@
 #pragma once
-#include "pixel_format.h"
+#include "image-processing/pixel_format.h"
 #include "resource.h"
 #include "texture-filtering/filters.h"
 
