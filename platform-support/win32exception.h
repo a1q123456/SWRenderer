@@ -1,4 +1,6 @@
 #pragma once
+#include <string>
+#include <system_error>
 
 class Win32ExceptionCategory : public std::error_category
 {

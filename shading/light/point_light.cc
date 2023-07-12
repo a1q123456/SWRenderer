@@ -1,4 +1,5 @@
 #include "point_light.h"
+#include <algorithm>
 
 LightFunction PointLight::GetDirectionEntry() const noexcept
 {

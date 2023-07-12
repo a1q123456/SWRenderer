@@ -1,4 +1,5 @@
 #include "win32exception.h"
+#include <Windows.h>
 
 const char *Win32ExceptionCategory::name() const noexcept
 {
